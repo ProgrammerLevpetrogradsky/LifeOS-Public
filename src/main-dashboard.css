@@ -670,6 +670,21 @@
   gap: 8px;
 }
 
+.life-main-focus-status {
+  margin: -5px 0 12px;
+  color: var(--focus-muted);
+  font-size: 14px;
+}
+
+.life-main-focus .focus-break-reminder {
+  --line: var(--focus-line);
+  --surface: var(--focus-surface);
+  --surface2: var(--focus-bg);
+  --text: var(--focus-ink);
+  --dark: var(--focus-accent);
+  --darkText: var(--focus-bg);
+}
+
 .life-main-time-toggle,
 .life-main-checkin-toggle {
   display: inline-flex;

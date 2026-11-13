@@ -1,5 +1,5 @@
-import { ArrowLeft, BellOff, Ellipsis, ExternalLink, Eye, EyeOff, Globe, Pause, Smartphone, Trees, X } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { ArrowLeft, BellOff, Ellipsis, ExternalLink, Eye, EyeOff, Globe, Pause, Play, Smartphone, Trees, X } from 'lucide-react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { elapsedClock, focusedDuration, type ActiveSession } from './data'
 import './main-dashboard.css'
 
@@ -13,7 +13,11 @@ interface MainFocusProps {
   onToggleTime: () => void
   onToggleSilence: () => void
   onPause: () => void
+  onResume: () => void
+  onLeave: () => void
+  returnDestination: string
   onFinish: () => void
+  children?: ReactNode
 }
 
 const deviceHelp = {
@@ -53,7 +57,8 @@ function closeAudio(context: AudioContext | null) {
 }
 
 export default function MainFocus({
-  session, showTime, now, storageError, checkinEnabled, onToggleCheckin, onToggleTime, onToggleSilence, onPause, onFinish,
+  session, showTime, now, storageError, checkinEnabled, onToggleCheckin, onToggleTime, onToggleSilence,
+  onPause, onResume, onLeave, returnDestination, onFinish, children,
 }: MainFocusProps) {
   const [panel, setPanel] = useState<'options' | keyof typeof deviceHelp>('options')
   const dialog = useRef<HTMLDialogElement>(null)
@@ -63,6 +68,7 @@ export default function MainFocus({
   const [ambient, setAmbient] = useState(false)
   const [ambientMessage, setAmbientMessage] = useState('')
   const silenced = session.silenceBreakReminders === true
+  const paused = Boolean(session.pausedAt)
   const help = panel !== 'options' ? deviceHelp[panel] : null
 
   useEffect(() => () => {
@@ -107,7 +113,8 @@ export default function MainFocus({
   return <main className="life-main-focus">
     {storageError && <p className="life-main-focus-error" role="alert">Your session is still here. Check available storage and try again.</p>}
     <header className="life-main-focus-top">
-      <button type="button" aria-label="Pause and return Home" onClick={onPause}><ArrowLeft size={22} /></button>
+      <button type="button" aria-label={paused ? `Back to ${returnDestination}` : `Pause and return to ${returnDestination}`}
+        title={`Back to ${returnDestination}`} onClick={onLeave}><ArrowLeft size={22} aria-hidden="true" /></button>
       <h1>Focus Mode</h1>
       <button ref={dialogTrigger} type="button" aria-label="Focus options" aria-haspopup="dialog"
         onClick={() => dialog.current?.showModal()}><Ellipsis size={23} /></button>
@@ -119,6 +126,7 @@ export default function MainFocus({
         </div>
       </div>
       <h2>{session.taskTitle}</h2>
+      {paused && <p className="life-main-focus-status" role="status">Paused</p>}
       <div className="life-main-focus-preferences">
         <button type="button" className="life-main-time-toggle" onClick={onToggleTime}>
           {showTime ? <EyeOff size={17} /> : <Eye size={17} />} {showTime ? 'Hide elapsed time' : 'Show elapsed time'}
@@ -129,8 +137,8 @@ export default function MainFocus({
         </button>
       </div>
       <div className="life-main-focus-controls">
-        <button type="button" className="life-main-focus-pause" onClick={onPause}>
-          <Pause size={18} aria-hidden="true" /> Take a break
+        <button type="button" className="life-main-focus-pause" onClick={paused ? onResume : onPause}>
+          {paused ? <><Play size={18} aria-hidden="true" /> Resume focus</> : <><Pause size={18} aria-hidden="true" /> Take a break</>}
         </button>
         <button type="button" className="life-main-focus-finish" onClick={onFinish}>Finish session</button>
       </div>
@@ -163,5 +171,6 @@ export default function MainFocus({
         {ambientMessage && <p className="life-main-focus-tool-note" role="status">{ambientMessage}</p>}
       </div>}
     </dialog>
+    {children}
   </main>
 }

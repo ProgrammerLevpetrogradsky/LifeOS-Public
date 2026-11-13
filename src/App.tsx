@@ -32,6 +32,7 @@ function App() {
   const [journalSearchResult, setJournalSearchResult] = useState<{ id: string }>()
   const [storageError, setStorageError] = useState(false)
   const [showTime, setShowTime] = useState(false)
+  const [pausedFocusScreen, setPausedFocusScreen] = useState<string>()
   const [now, setNow] = useState(Date.now())
   const [interest, setInterest] = useState(0)
   const [continueDesire, setContinueDesire] = useState(0)
@@ -142,11 +143,16 @@ function App() {
     }
   }
 
-  const pauseSession = () => {
+  const pauseSession = (stayInFocus: boolean) => {
     const session = dataRef.current.activeSession
-    if (!session || session.pausedAt) return
-    const pausedAt = new Date().toISOString()
-    if (update(current => ({ ...current, activeSession: { ...session, pausedAt, breakReminderDismissed: undefined } }))) navigate('main')
+    if (!session) return
+    if (!session.pausedAt) {
+      const pausedAt = new Date()
+      if (!update(current => ({ ...current, activeSession: { ...session, pausedAt: pausedAt.toISOString(), breakReminderDismissed: undefined } }))) return
+      setNow(pausedAt.getTime())
+    }
+    setPausedFocusScreen(stayInFocus ? session.id : undefined)
+    if (!stayInFocus) navigate('main')
   }
 
   const resumeSession = () => {
@@ -158,6 +164,7 @@ function App() {
       ...current,
       activeSession: { ...session, pausedAt: undefined, pausedDurationMs, breakReminderDismissed: undefined },
     }))) {
+      setPausedFocusScreen(undefined)
       setNow(now)
       window.scrollTo({ top: 0, behavior: 'instant' })
     }
@@ -165,7 +172,7 @@ function App() {
 
   const toggleFocusSilence = () => {
     const session = dataRef.current.activeSession
-    if (!session || session.pausedAt) return
+    if (!session) return
     update(current => ({
       ...current,
       activeSession: { ...session, silenceBreakReminders: !session.silenceBreakReminders },
@@ -341,7 +348,10 @@ function App() {
     ? Date.parse(pausedSession.pausedAt) + reminderMinutes * 60_000
     : null
 
-  if (data.activeSession && !data.activeSession.pausedAt) return <>
+  const breakReminder = reminderDueAt !== null && <BreakReminder dueAt={reminderDueAt}
+    onResume={resumeSession} onDismiss={dismissBreakReminder} />
+
+  if (data.activeSession && (!pausedSession || pausedFocusScreen === pausedSession.id)) return <>
     <MainFocus
       session={data.activeSession}
       showTime={showTime}
@@ -351,9 +361,14 @@ function App() {
       onToggleCheckin={() => update(current => ({ ...current, focusCheckinEnabled: current.focusCheckinEnabled === false }))}
       onToggleTime={() => setShowTime(current => !current)}
       onToggleSilence={toggleFocusSilence}
-      onPause={pauseSession}
+      onPause={() => pauseSession(true)}
+      onResume={resumeSession}
+      onLeave={() => pauseSession(false)}
+      returnDestination={showHome ? 'Home' : defaultView === 'journal' ? 'Journal' : 'Settings'}
       onFinish={endSession}
-    />
+    >
+      {breakReminder}
+    </MainFocus>
     {undoNotice}
   </>
 
@@ -395,8 +410,7 @@ function App() {
         <header className="mobile-header">{renderBrand(18)}<span>v0.1</span></header>
         {(storageError || loadResult.error) && <div className="storage-error" role="alert">{loadResult.error ?? 'Your browser could not save changes locally. Your unsaved text is still here. Check available storage, then try again.'} {loadResult.error && 'Import a valid backup below to recover. Existing saved content will not be changed until recovery succeeds.'}</div>}
         {backupMessage && <div className="storage-error" role="status">{backupMessage}</div>}
-        {reminderDueAt !== null && <BreakReminder dueAt={reminderDueAt}
-          onResume={resumeSession} onDismiss={dismissBreakReminder} />}
+        {breakReminder}
         {view === 'main' && <MainDashboard
           tasks={data.tasks}
           pausedTaskTitle={pausedSession?.taskTitle}
