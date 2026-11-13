@@ -1,11 +1,17 @@
 import { useEffect, useLayoutEffect, useRef, useState, type FormEvent } from 'react'
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, BookOpen, Check, ChevronRight, Circle, ClipboardList, GripHorizontal, ListTodo, MessageCircle, Pause, Pencil, Play, Plus, Search, Settings2, Trash2, X } from 'lucide-react'
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, BookOpen, Check, ChevronRight, Circle, ClipboardList, GripHorizontal, History, ListTodo, MessageCircle, Pause, Pencil, Play, Plus, Search, Settings2, Trash2, X } from 'lucide-react'
 import { taskLists, type LifeOSData, type Task, type TaskList } from './data'
 import { todayTaskLimit } from './task-rules'
 import { JournalSheet } from './journal/JournalSheet'
 import './main-dashboard.css'
 
 interface MainDashboardProps {
+  initialScreen?: 'home' | 'tasks'
+  onReturnHome?: () => void
+  returnLabel: string
+  showTasksShortcut: boolean
+  showFocusShortcut: boolean
+  searchIncludesJournal: boolean
   tasks: Task[]
   pausedTaskTitle?: string
   displayName?: string
@@ -18,6 +24,7 @@ interface MainDashboardProps {
   onStartOpenFocus: () => void
   onJournal?: () => void
   onReflect?: () => void
+  onFocusHistory: () => void
   onSettings: () => void
   onSearch: () => void
 }
@@ -33,8 +40,8 @@ function greeting(hour: number) {
   return 'Good evening'
 }
 
-export default function MainDashboard({ tasks, pausedTaskTitle, displayName, onResume, onFinishPaused, onUpdate, onOpenTask, onDeleteTask, onStart, onStartOpenFocus, onJournal, onReflect, onSettings, onSearch }: MainDashboardProps) {
-  const [screen, setScreen] = useState<'home' | 'tasks'>('home')
+export default function MainDashboard({ initialScreen = 'home', onReturnHome, returnLabel, showTasksShortcut, showFocusShortcut, searchIncludesJournal, tasks, pausedTaskTitle, displayName, onResume, onFinishPaused, onUpdate, onOpenTask, onDeleteTask, onStart, onStartOpenFocus, onJournal, onReflect, onFocusHistory, onSettings, onSearch }: MainDashboardProps) {
+  const [screen, setScreen] = useState(initialScreen)
   const [filter, setFilter] = useState<TaskList | 'completed'>('today')
   const [editor, setEditor] = useState<TaskEditor | null>(null)
   const [deleting, setDeleting] = useState<string | null>(null)
@@ -179,7 +186,7 @@ export default function MainDashboard({ tasks, pausedTaskTitle, displayName, onR
     <header className="life-main-hero">
       <h1 ref={heading} tabIndex={-1}>{displayName?.trim() ? `Hey ${displayName.trim()}!` : greeting(now.getHours())}</h1>
       <div className="life-main-hero-actions">
-        <button type="button" className="life-main-icon life-main-settings" aria-label={onJournal ? 'Search tasks and journal' : 'Search tasks'}
+        <button type="button" className="life-main-icon life-main-settings" aria-label={searchIncludesJournal ? 'Search tasks and journal' : 'Search tasks'}
           aria-haspopup="dialog" onClick={onSearch}><Search size={20} aria-hidden="true" /></button>
         <button type="button" className="life-main-icon life-main-settings" aria-label="Open settings" onClick={onSettings}><Settings2 size={20} /></button>
       </div>
@@ -215,23 +222,26 @@ export default function MainDashboard({ tasks, pausedTaskTitle, displayName, onR
       </div>
 
       <nav className="life-main-shortcuts" aria-label="Home shortcuts">
-        <button type="button" onClick={() => openTasks()}>
+        {showTasksShortcut && <button type="button" onClick={() => openTasks()}>
           <span className="life-main-shortcut-icon tasks"><ClipboardList size={21} aria-hidden="true" /></span>
           <strong>Tasks</strong>
-        </button>
+        </button>}
         {onJournal && <button type="button" onClick={onJournal}>
           <span className="life-main-shortcut-icon journal"><BookOpen size={21} aria-hidden="true" /></span>
           <strong>Journal</strong>
         </button>}
-        <button type="button" onClick={breakCard ? onResume : onStartOpenFocus}>
+        {showFocusShortcut && <button type="button" onClick={breakCard ? onResume : onStartOpenFocus}>
           <span className="life-main-shortcut-icon focus"><Play size={21} aria-hidden="true" /></span>
           <strong>{breakCard ? 'Resume Focus' : 'Start Focus'}</strong>
-        </button>
+        </button>}
         {onReflect && <button type="button" onClick={onReflect}>
           <span className="life-main-shortcut-icon reflect"><MessageCircle size={21} aria-hidden="true" /></span>
           <strong>Reflect</strong>
         </button>}
       </nav>
+      <button type="button" className="life-main-text life-main-history-link" onClick={onFocusHistory}>
+        <History size={17} aria-hidden="true" /> Focus history <ChevronRight size={15} aria-hidden="true" />
+      </button>
     </div>
   </main>
 
@@ -242,7 +252,10 @@ export default function MainDashboard({ tasks, pausedTaskTitle, displayName, onR
 
   return <main className="life-main life-main-tasks">
     <header className="life-main-tasks-header">
-      <button type="button" className="life-main-icon" aria-label="Back to Home" onClick={() => { setScreen('home'); showList('today') }}><ArrowLeft size={21} /></button>
+      <button type="button" className="life-main-icon" aria-label={returnLabel} onClick={() => {
+        if (onReturnHome) onReturnHome()
+        else { setScreen('home'); showList('today') }
+      }}><ArrowLeft size={21} /></button>
       <h1 ref={heading} tabIndex={-1}>Tasks</h1>
       <button type="button" className="life-main-icon" aria-label="Add task" aria-haspopup="dialog" disabled={!canAdd} onClick={() => addTo(addList)}><Plus size={23} /></button>
     </header>

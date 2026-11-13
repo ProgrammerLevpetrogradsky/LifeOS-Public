@@ -180,6 +180,31 @@
   gap: 8px;
 }
 
+.settings-page__account {
+  display: grid;
+  gap: 10px;
+}
+
+.settings-page__email {
+  overflow-wrap: anywhere;
+}
+
+.settings-page__account-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+}
+
+.settings-page__account-links button {
+  min-height: 44px;
+  padding: 4px 0;
+  border: 0;
+  background: none;
+  color: var(--settings-accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .settings-page__action {
   display: flex;
   min-height: 44px;
@@ -227,6 +252,24 @@
 .settings-page__navigation-toggle {
   min-height: 54px;
   padding-block: 5px;
+}
+
+.settings-page__shortcut {
+  min-width: 0;
+  margin: 0;
+  padding: 0 10px 4px;
+  border: 1px solid var(--settings-line);
+  border-radius: 10px;
+}
+
+.settings-page__shortcut legend {
+  padding-inline: 5px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.settings-page__shortcut-option {
+  font-size: 14px;
 }
 
 .settings-page__toggle input {

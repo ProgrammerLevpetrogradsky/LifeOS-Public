@@ -11,6 +11,7 @@ export interface FlowEnginePageProps {
   onUpdate: (change: (current: LifeOSData) => LifeOSData) => boolean
   onReturn: () => void
   returnLabel: string
+  sessionsOnly?: boolean
 }
 
 type FlowStage = 'home' | 'discover' | 'review' | 'analyze' | 'experiment' | 'principle' | 'history' | 'reflections'
@@ -25,8 +26,8 @@ const newId = () => crypto.randomUUID()
 const dateLabel = (date: string) => new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric' }).format(new Date(date))
 const timeLabel = (date: string) => new Intl.DateTimeFormat('en', { hour: 'numeric', minute: '2-digit' }).format(new Date(date))
 
-export default function FlowEnginePage({ data, onUpdate, onReturn, returnLabel }: FlowEnginePageProps) {
-  const [stage, setStage] = useState<FlowStage>('discover')
+export default function FlowEnginePage({ data, onUpdate, onReturn, returnLabel, sessionsOnly = false }: FlowEnginePageProps) {
+  const [stage, setStage] = useState<FlowStage>(sessionsOnly ? 'history' : 'discover')
   const [step, setStep] = useState(0)
   const [answers, setAnswers] = useState(emptyAnswers)
   const [draft, setDraft] = useState<FlowDiscovery | null>(null)
@@ -54,7 +55,7 @@ export default function FlowEnginePage({ data, onUpdate, onReturn, returnLabel }
   const flow = data.flowEngine ?? emptyFlowEngineData()
   const observations = useMemo(() => factorObservations(data.sessions), [data.sessions])
   const sessionSummary = useMemo(() => summarizeSessions(data.sessions), [data.sessions])
-  const recent = useMemo(() => recentSessions(data.sessions), [data.sessions])
+  const recent = useMemo(() => recentSessions(data.sessions, sessionsOnly ? data.sessions.length : undefined), [data.sessions, sessionsOnly])
   const activeHypotheses = flow.hypotheses.filter(item => item.status === 'active')
   const activeExperiments = flow.experiments.filter(item => item.status === 'active')
   const selectedExperiment = flow.experiments.find(item => item.id === selectedExperimentId) ?? activeExperiments[0]
@@ -104,6 +105,10 @@ export default function FlowEnginePage({ data, onUpdate, onReturn, returnLabel }
   }
 
   const goBack = () => {
+    if (sessionsOnly) {
+      onReturn()
+      return
+    }
     if (stage === 'home' || (stage === 'discover' && step === 0)) {
       onReturn()
     } else if (stage === 'review') {
@@ -188,12 +193,12 @@ export default function FlowEnginePage({ data, onUpdate, onReturn, returnLabel }
     analyze: 'Find patterns',
     experiment: 'Try an idea',
     principle: 'What works for you',
-    history: 'History',
+    history: sessionsOnly ? 'Focus history' : 'History',
     reflections: 'Past reflections',
   }
   const title = titles[stage]
   const isReflectStart = stage === 'home' || (stage === 'discover' && step === 0)
-  const backLabel = isReflectStart ? returnLabel : stage === 'review' || stage === 'discover'
+  const backLabel = sessionsOnly || isReflectStart ? returnLabel : stage === 'review' || stage === 'discover'
     ? 'Previous question'
     : stage === 'reflections' || tools.some(tool => tool.stage === stage) ? 'Back to History' : 'Back to Reflect'
   const historyButton = <button type="button" className="flow-history-button" onClick={() => openStage('history')}>
@@ -232,7 +237,7 @@ export default function FlowEnginePage({ data, onUpdate, onReturn, returnLabel }
     {title && <header className="flow-screen-header"><h1 tabIndex={-1}>{title}</h1></header>}
 
     {stage === 'history' && <>
-      {flow.discoveries.length > 0 && <button type="button" className="flow-history-row" onClick={() => openStage('reflections')}>
+      {!sessionsOnly && flow.discoveries.length > 0 && <button type="button" className="flow-history-row" onClick={() => openStage('reflections')}>
         <span>Past reflections</span>
         <span>{flow.discoveries.length}</span>
         <ChevronRight size={17} aria-hidden="true" />
@@ -245,7 +250,7 @@ export default function FlowEnginePage({ data, onUpdate, onReturn, returnLabel }
             <div><span>Desire to continue</span><strong>{sessionSummary.continueDesire} / 5</strong></div>
             <div><span>Sense of progress</span><strong>{sessionSummary.progress} / 5</strong></div>
           </div>}
-          <h3>Recent sessions</h3>
+          {!sessionsOnly && <h3>Recent sessions</h3>}
           <div className="flow-history-list">{recent.map(session => <article key={session.id}>
             <strong>{session.taskTitle}</strong>
             <span>{dateLabel(session.endedAt)} · {timeLabel(session.endedAt)}</span>
@@ -253,7 +258,7 @@ export default function FlowEnginePage({ data, onUpdate, onReturn, returnLabel }
           </article>)}</div>
         </div> : <p className="muted flow-history-empty">Completed focus sessions will appear here.</p>}
       </details>
-      <details className="flow-history">
+      {!sessionsOnly && <details className="flow-history">
         <summary>More tools</summary>
         <div className="flow-history-content flow-tools">
           {tools.map(({ stage, label }) => <button type="button" className="flow-history-row" key={stage} onClick={() => openStage(stage)}>
@@ -261,7 +266,7 @@ export default function FlowEnginePage({ data, onUpdate, onReturn, returnLabel }
             <ChevronRight size={17} aria-hidden="true" />
           </button>)}
         </div>
-      </details>
+      </details>}
     </>}
 
     {stage === 'reflections' && flow.discoveries[0] && <section className="flow-result">

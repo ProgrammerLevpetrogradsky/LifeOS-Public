@@ -1,13 +1,16 @@
 import { useState, type ChangeEvent, type ReactNode } from 'react'
-import { ChevronRight, Compass, Copy, Download, ExternalLink, Github, HardDrive, Info, Monitor, Moon, Palette, Sun, Timer, Upload } from 'lucide-react'
-import { breakReminderMinutes, maxDisplayNameLength, navigationSections, type BreakReminderMinutes, type NavigationSection, type Theme } from '../data'
+import { ChevronRight, Compass, Copy, Download, ExternalLink, Github, HardDrive, Info, Monitor, Moon, Palette, Sun, Timer, Upload, UserRound } from 'lucide-react'
+import { breakReminderMinutes, maxDisplayNameLength, shortcuts, type BreakReminderMinutes, type Shortcut, type ShortcutLocation, type Theme } from '../data'
 import './settings.css'
 
 interface SettingsPageProps {
+  account?: ReactNode
   theme: Theme
   onThemeChange: (theme: Theme) => void
-  hiddenSections: NavigationSection[]
-  onSectionVisibilityChange: (section: NavigationSection, visible: boolean) => void
+  showHome: boolean
+  onHomeVisibilityChange: (visible: boolean) => void
+  shortcutVisible: (id: Shortcut, location: ShortcutLocation) => boolean
+  onShortcutChange: (id: Shortcut, location: ShortcutLocation, visible: boolean) => void
   onExport: () => void
   onImport: (event: ChangeEvent<HTMLInputElement>) => void
   repoUrl: string
@@ -96,7 +99,8 @@ function AboutLifeOS({ repoUrl }: { repoUrl: string }) {
 }
 
 export default function SettingsPage({
-  theme, onThemeChange, hiddenSections, onSectionVisibilityChange, onExport, onImport, repoUrl, focusCheckin,
+  account,
+  theme, onThemeChange, showHome, onHomeVisibilityChange, shortcutVisible, onShortcutChange, onExport, onImport, repoUrl, focusCheckin,
   reminderMinutes, onReminderMinutesChange, displayName, onDisplayNameChange,
 }: SettingsPageProps) {
   return (
@@ -104,6 +108,7 @@ export default function SettingsPage({
       <h1 id="settings-page-title">Settings</h1>
 
       <div className="settings-page__groups">
+        {account && <SettingsGroup title="Account" icon={<UserRound size={18} />}>{account}</SettingsGroup>}
         <SettingsGroup title="Personalize" icon={<Palette size={18} />}
           summary={themes.find(option => option.value === theme)?.label}>
           <fieldset className="settings-page__themes">
@@ -122,24 +127,21 @@ export default function SettingsPage({
         </SettingsGroup>
 
         <SettingsGroup title="Navigation" icon={<Compass size={18} />}>
-          <div>
-            {navigationSections.map(({ id, label }) => {
-              const visible = !hiddenSections.includes(id)
-              const location = id === 'flow' ? 'on Home' : 'in the navigation bar'
-              const status = visible && id === 'flow' && hiddenSections.includes('main')
-                ? 'Shown on Home when Home is visible'
-                : `${visible ? 'Shown' : 'Hidden'} ${location}`
-              return <label className="settings-page__toggle settings-page__navigation-toggle" key={id}>
-                <span className="settings-page__toggle-copy">
-                  <strong id={`settings-nav-label-${id}`}>{label}</strong>
-                  <span id={`settings-nav-status-${id}`}>{status}</span>
-                </span>
-                <input type="checkbox" role="switch" checked={visible}
-                  aria-labelledby={`settings-nav-label-${id}`} aria-describedby={`settings-nav-status-${id}`}
-                  onChange={event => onSectionVisibilityChange(id, event.currentTarget.checked)} />
-              </label>
-            })}
-          </div>
+          <label className="settings-page__toggle settings-page__navigation-toggle">
+            <span className="settings-page__toggle-copy"><strong>Home</strong><span>In the navigation bar</span></span>
+            <input type="checkbox" role="switch" aria-label="Home in navigation bar" checked={showHome}
+              onChange={event => onHomeVisibilityChange(event.currentTarget.checked)} />
+          </label>
+          {!showHome && <p className="settings-page__description">Home shortcuts appear when Home is visible.</p>}
+          {shortcuts.map(({ id, label }) => <fieldset key={id} className="settings-page__shortcut">
+            <legend>{label}</legend>
+            {([['home', 'On Home'], ['bar', 'In navigation bar']] as const).map(([location, text]) => <label
+              className="settings-page__toggle settings-page__shortcut-option" key={location}>
+              <span>{text}</span>
+              <input type="checkbox" role="switch" aria-label={`${label} ${text.toLowerCase()}`}
+                checked={shortcutVisible(id, location)} onChange={event => onShortcutChange(id, location, event.currentTarget.checked)} />
+            </label>)}
+          </fieldset>)}
         </SettingsGroup>
 
         <SettingsGroup title="Focus" icon={<Timer size={18} />}>

@@ -7,6 +7,23 @@ export const navigationSections = [
   { id: 'journal', label: 'Journal' },
 ] as const
 export type NavigationSection = typeof navigationSections[number]['id']
+export const shortcuts = [
+  { id: 'tasks', label: 'Tasks' },
+  { id: 'journal', label: 'Journal' },
+  { id: 'focus', label: 'Focus' },
+  { id: 'flow', label: 'Reflect' },
+] as const
+export type Shortcut = typeof shortcuts[number]['id']
+export type ShortcutLocation = 'home' | 'bar'
+export type ShortcutPreferences = Partial<Record<Shortcut, Partial<Record<ShortcutLocation, boolean>>>>
+
+export function shortcutVisible(data: LifeOSData, shortcut: Shortcut, location: ShortcutLocation): boolean {
+  return data.shortcutPreferences?.[shortcut]?.[location] ?? (
+    location === 'home'
+      ? !((shortcut === 'journal' || shortcut === 'flow') && data.hiddenSections?.includes(shortcut))
+      : shortcut === 'journal' && !data.hiddenSections?.includes('journal')
+  )
+}
 export const breakReminderMinutes = [0, 5, 10, 15, 20] as const
 export type BreakReminderMinutes = typeof breakReminderMinutes[number]
 export const maxDisplayNameLength = 40
@@ -155,6 +172,7 @@ export interface LifeOSData {
   pendingSession: PendingSession | null
   theme: Theme
   hiddenSections?: NavigationSection[]
+  shortcutPreferences?: ShortcutPreferences
   focusCheckinEnabled?: boolean
   displayName?: string
   breakReminderMinutes?: BreakReminderMinutes
@@ -239,6 +257,11 @@ export function validateLifeOSData(value: unknown): value is LifeOSData {
   if (value.theme !== 'light' && value.theme !== 'dark' && value.theme !== 'system') return false
   if (value.hiddenSections !== undefined && (!Array.isArray(value.hiddenSections) ||
     !value.hiddenSections.every(id => navigationSections.some(section => section.id === id)))) return false
+  if (value.shortcutPreferences !== undefined && (!isRecord(value.shortcutPreferences) ||
+    !Object.entries(value.shortcutPreferences).every(([id, options]) =>
+      shortcuts.some(shortcut => shortcut.id === id) && isRecord(options) &&
+      Object.entries(options).every(([location, enabled]) =>
+        (location === 'home' || location === 'bar') && typeof enabled === 'boolean')))) return false
   const validTask = (item: unknown) => isRecord(item) && isString(item.id) && isString(item.title) && isTimestamp(item.createdAt) && (item.completedAt === null || isTimestamp(item.completedAt)) &&
     (item.list === undefined || taskLists.some(list => list === item.list))
   const validSessionRatings = (item: Record<string, unknown>) => {
@@ -326,18 +349,19 @@ export async function restoreBackup(
   current: LifeOSData,
   storage: Pick<Storage, 'getItem' | 'setItem'>,
   confirmReplacement: () => boolean,
+  storageKey = STORAGE_KEY,
 ): Promise<LifeOSData | null> {
   const next = await prepareBackupRestore(raw, current)
   if (!confirmReplacement()) return null
 
   let previousRaw: string | null
-  try { previousRaw = storage.getItem(STORAGE_KEY) }
+  try { previousRaw = storage.getItem(storageKey) }
   catch { throw new Error('Could not access the existing saved data. It has not been changed.') }
   if (previousRaw !== null) {
     try { await parseBackupWithIntegrity(previousRaw) }
     catch {
       try {
-        const archiveBase = `lifeos.recovery.${Date.now()}`
+        const archiveBase = storageKey === STORAGE_KEY ? `lifeos.recovery.${Date.now()}` : `${storageKey}.recovery.${Date.now()}`
         let archiveKey = archiveBase
         let suffix = 1
         while (storage.getItem(archiveKey) !== null) archiveKey = `${archiveBase}.${suffix++}`
@@ -348,7 +372,7 @@ export async function restoreBackup(
     }
   }
 
-  try { storage.setItem(STORAGE_KEY, JSON.stringify(next)) }
+  try { storage.setItem(storageKey, JSON.stringify(next)) }
   catch { throw new Error('Could not save the backup. Your existing saved data is still available.') }
   return next
 }
@@ -360,9 +384,9 @@ export function mergeBackupData(current: LifeOSData, backup: LifeOSData): LifeOS
   return resolvePendingSession({ ...backup, importedNotes })
 }
 
-export function loadData(): LoadResult {
+export function loadData(storageKey = STORAGE_KEY): LoadResult {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
+    const raw = localStorage.getItem(storageKey)
     if (!raw) return { data: emptyData(), error: null }
     try {
       return { data: resolvePendingSession(parseBackup(raw)), error: null }
@@ -374,9 +398,9 @@ export function loadData(): LoadResult {
   }
 }
 
-export function saveData(data: LifeOSData): boolean {
+export function saveData(data: LifeOSData, storageKey = STORAGE_KEY): boolean {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
+    localStorage.setItem(storageKey, JSON.stringify(data))
     return true
   } catch {
     return false

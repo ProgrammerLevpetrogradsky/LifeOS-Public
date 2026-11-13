@@ -1,9 +1,9 @@
 import MainDashboard from './MainDashboard'
 import MainFocus from './MainFocus'
 import TaskHistory from './TaskHistory'
-import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
-import { ArrowRight, BookOpen, House, Leaf, MessageCircle, Settings2, Sparkles } from 'lucide-react'
-import { focusedDuration, loadData, navigationSections, recordUnratedSession, restoreBackup, saveData, type Factor, type JournalFolderAppearance, type LifeOSData, type NavigationSection, type Task } from './data'
+import { useEffect, useRef, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react'
+import { ArrowRight, BookOpen, ClipboardList, House, Leaf, MessageCircle, Play, Settings2, Sparkles } from 'lucide-react'
+import { focusedDuration, loadData, recordUnratedSession, restoreBackup, saveData, shortcuts, shortcutVisible, type Factor, type JournalFolderAppearance, type LifeOSData, type Shortcut, type ShortcutLocation, type Task } from './data'
 import { base64ToBytes, buildNoteBlocks, makeImportedNote, type SourceIndex } from './notes'
 import JournalPage, { type JournalDraft } from './journal/JournalPage'
 import FlowEnginePage from './flow/FlowEnginePage'
@@ -12,22 +12,25 @@ import SettingsPage from './settings/SettingsPage'
 import { useDeleteUndo } from './delete-undo'
 import UnifiedSearch from './search/UnifiedSearch'
 
-type View = NavigationSection | 'settings'
-const sectionIcons = { main: House, flow: MessageCircle, journal: BookOpen }
+type View = Exclude<Shortcut, 'focus'> | 'main' | 'settings' | 'focus-history'
+const shortcutIcons = { tasks: ClipboardList, journal: BookOpen, focus: Play, flow: MessageCircle }
 const factors: Factor[] = ['Meaningful Goal', 'Personal Control', 'Fast Feedback', 'Other']
 const repoUrl = 'https://github.com/ProgrammerLevpetrogradsky/LifeOS-Public'
 
-function App() {
-  const [loadResult, setLoadResult] = useState(loadData)
+function App({ storageKey, account }: { storageKey?: string; account?: ReactNode }) {
+  const [loadResult, setLoadResult] = useState(() => loadData(storageKey))
   const data = loadResult.data
   const dataRef = useRef(data)
   const hiddenSections = data.hiddenSections ?? []
-  const visibleSections = navigationSections.filter(section => section.id !== 'flow' && !hiddenSections.includes(section.id))
-  const defaultView = visibleSections[0]?.id ?? 'settings'
-  const [requestedView, setView] = useState<View>(defaultView)
-  const view = requestedView === 'settings' || !hiddenSections.includes(requestedView) ? requestedView : defaultView
   const showHome = !hiddenSections.includes('main')
-  const showJournal = !hiddenSections.includes('journal')
+  const onHome = (id: Shortcut) => shortcutVisible(data, id, 'home')
+  const inBar = (id: Shortcut) => shortcutVisible(data, id, 'bar')
+  const defaultView = showHome ? 'main' : (['journal', 'tasks', 'flow'] as const).find(inBar) ?? 'settings'
+  const [requestedView, setView] = useState<View>(defaultView)
+  const isHidden = (page: View) => page === 'main' ? !showHome
+    : (page === 'flow' || page === 'journal') && !inBar(page) && !(showHome && onHome(page))
+  const view = isHidden(requestedView) ? defaultView : requestedView
+  const showJournal = !isHidden('journal')
   const [searchOpen, setSearchOpen] = useState(false)
   const [journalSearchResult, setJournalSearchResult] = useState<{ id: string }>()
   const [storageError, setStorageError] = useState(false)
@@ -61,7 +64,7 @@ function App() {
   const update = (change: (current: LifeOSData) => LifeOSData) => {
     if (loadResult.error) { setStorageError(true); return false }
     const next = change(dataRef.current)
-    const persisted = saveData(next)
+    const persisted = saveData(next, storageKey)
     setStorageError(!persisted)
     if (persisted) {
       dataRef.current = next
@@ -89,6 +92,7 @@ function App() {
   }
 
   useEffect(() => {
+    if (storageKey) return
     let cancelled = false
     async function importLocalSources() {
       try {
@@ -111,7 +115,7 @@ function App() {
     if (!file) return
     try {
       const backupText = await file.text()
-      const next = await restoreBackup(backupText, dataRef.current, localStorage, () => window.confirm('Replace your current tasks, sessions, journal, and settings with this backup? Any readable imported Notes will be kept. Unreadable saved data will be preserved for recovery.'))
+      const next = await restoreBackup(backupText, dataRef.current, localStorage, () => window.confirm('Replace your current tasks, sessions, journal, and settings with this backup? Any readable imported Notes will be kept. Unreadable saved data will be preserved for recovery.'), storageKey)
       if (!next) return
       clearUndo()
       dataRef.current = next
@@ -302,7 +306,7 @@ function App() {
 
   const navigate = (next: View) => {
     setJournalSearchResult(undefined)
-    setView(next !== 'settings' && hiddenSections.includes(next) ? defaultView : next)
+    setView(isHidden(next) ? defaultView : next)
     setJournalPrompt(false)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
@@ -317,15 +321,29 @@ function App() {
     setJournalSearchResult({ id })
   }
 
-  const changeSectionVisibility = (section: NavigationSection, visible: boolean) => update(current => {
-    const hidden = (current.hiddenSections ?? []).filter(id => id !== section)
-    return { ...current, hiddenSections: visible ? hidden : [...hidden, section] }
+  const changeHomeVisibility = (visible: boolean) => update(current => {
+    const hidden = (current.hiddenSections ?? []).filter(id => id !== 'main')
+    return { ...current, hiddenSections: visible ? hidden : [...hidden, 'main'] }
   })
 
+  const changeShortcut = (id: Shortcut, location: ShortcutLocation, visible: boolean) => update(current => ({
+    ...current,
+    shortcutPreferences: {
+      ...current.shortcutPreferences,
+      [id]: { ...current.shortcutPreferences?.[id], [location]: visible },
+    },
+  }))
+
   const renderNavigation = (iconSize: number) => <>
-    {visibleSections.map(({ id, label }) => {
-      const Icon = sectionIcons[id]
-      return <NavButton key={id} icon={<Icon size={iconSize} />} label={label} selected={view === id} onClick={() => navigate(id)} />
+    {showHome && <NavButton icon={<House size={iconSize} />} label="Home" selected={view === 'main'} onClick={() => navigate('main')} />}
+    {shortcuts.filter(({ id }) => inBar(id)).map(({ id, label }) => {
+      const Icon = shortcutIcons[id]
+      return <NavButton key={id} icon={<Icon size={iconSize} />} label={label} selected={view === id}
+        onClick={() => {
+          if (id !== 'focus') navigate(id)
+          else if (data.activeSession?.pausedAt) resumeSession()
+          else startFocus()
+        }} />
     })}
     <NavButton icon={<Settings2 size={iconSize} />} label="Settings" selected={view === 'settings'} onClick={() => navigate('settings')} />
   </>
@@ -364,7 +382,7 @@ function App() {
       onPause={() => pauseSession(true)}
       onResume={resumeSession}
       onLeave={() => pauseSession(false)}
-      returnDestination={showHome ? 'Home' : defaultView === 'journal' ? 'Journal' : 'Settings'}
+      returnDestination={showHome ? 'Home' : shortcuts.find(({ id }) => id === defaultView)?.label ?? 'Settings'}
       onFinish={endSession}
     >
       {breakReminder}
@@ -399,7 +417,7 @@ function App() {
   </>)
 
   return (
-    <div className={view === 'flow' ? 'app-shell flow-shell' : 'app-shell'}>
+    <div className={view === 'flow' || view === 'focus-history' ? 'app-shell flow-shell' : 'app-shell'}>
       <aside className="sidebar">
         {renderBrand(20)}
         <nav aria-label="Main navigation">{renderNavigation(19)}</nav>
@@ -411,7 +429,13 @@ function App() {
         {(storageError || loadResult.error) && <div className="storage-error" role="alert">{loadResult.error ?? 'Your browser could not save changes locally. Your unsaved text is still here. Check available storage, then try again.'} {loadResult.error && 'Import a valid backup below to recover. Existing saved content will not be changed until recovery succeeds.'}</div>}
         {backupMessage && <div className="storage-error" role="status">{backupMessage}</div>}
         {breakReminder}
-        {view === 'main' && <MainDashboard
+        {(view === 'main' || view === 'tasks') && <MainDashboard key={view}
+          initialScreen={view === 'tasks' ? 'tasks' : 'home'}
+          onReturnHome={view === 'tasks' ? returnFromSection : undefined}
+          returnLabel={returnLabel}
+          showTasksShortcut={onHome('tasks')}
+          showFocusShortcut={onHome('focus')}
+          searchIncludesJournal={showJournal}
           tasks={data.tasks}
           pausedTaskTitle={pausedSession?.taskTitle}
           displayName={data.displayName}
@@ -422,13 +446,15 @@ function App() {
           onDeleteTask={deleteTask}
           onStart={startFocus}
           onStartOpenFocus={() => startFocus()}
-          onJournal={showJournal ? () => navigate('journal') : undefined}
-          onReflect={hiddenSections.includes('flow') ? undefined : () => navigate('flow')}
+          onJournal={onHome('journal') ? () => navigate('journal') : undefined}
+          onReflect={onHome('flow') ? () => navigate('flow') : undefined}
+          onFocusHistory={() => navigate('focus-history')}
           onSettings={() => navigate('settings')}
           onSearch={() => setSearchOpen(true)}
         />}
 
-        {view === 'flow' && <FlowEnginePage data={data} onUpdate={update} onReturn={returnFromSection} returnLabel={returnLabel} />}
+        {(view === 'flow' || view === 'focus-history') && <FlowEnginePage key={view}
+          data={data} onUpdate={update} onReturn={returnFromSection} returnLabel={returnLabel} sessionsOnly={view === 'focus-history'} />}
 
         {view === 'journal' && (
           <JournalPage entries={data.journal} folders={data.journalFolders ?? []} draft={journalDraft} onDraftChange={setJournalDraft}
@@ -442,10 +468,13 @@ function App() {
 
         {view === 'settings' && (
           <SettingsPage
+            account={account}
             theme={data.theme}
             onThemeChange={theme => update(current => ({ ...current, theme }))}
-            hiddenSections={hiddenSections}
-            onSectionVisibilityChange={changeSectionVisibility}
+            showHome={showHome}
+            onHomeVisibilityChange={changeHomeVisibility}
+            shortcutVisible={(id, location) => location === 'home' ? onHome(id) : inBar(id)}
+            onShortcutChange={changeShortcut}
             onExport={exportData}
             onImport={importBackup}
             repoUrl={repoUrl}

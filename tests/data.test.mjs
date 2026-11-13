@@ -26,6 +26,23 @@ test('tasks, sessions, journal, and active focus survive a save and reload', () 
   assert.deepEqual(loadData().data, data)
 })
 
+test('account saves and backup restores leave the guest workspace untouched', async () => {
+  const guest = { ...emptyData(), displayName: 'Guest' }
+  const account = { ...emptyData(), displayName: 'Account' }
+  const accountKey = `${STORAGE_KEY}.account.test-user`
+  const memory = new Map([[STORAGE_KEY, JSON.stringify(guest)]])
+  globalThis.localStorage = {
+    getItem: key => memory.get(key) ?? null,
+    setItem: (key, value) => memory.set(key, value),
+  }
+  assert.equal(saveData(account, accountKey), true)
+  assert.deepEqual(loadData(accountKey).data, account)
+  const restored = { ...emptyData(), displayName: 'Restored' }
+  await restoreBackup(JSON.stringify(restored), account, localStorage, () => true, accountKey)
+  assert.deepEqual(loadData(accountKey).data, restored)
+  assert.deepEqual(loadData().data, guest)
+})
+
 test('older Upcoming tasks move to Someday when loaded or restored from a backup', async () => {
   const createdAt = '2026-10-21T10:00:00.000Z'
   const completedAt = '2026-10-21T11:00:00.000Z'
