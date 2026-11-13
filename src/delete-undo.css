@@ -1,0 +1,61 @@
+.delete-undo-status {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.delete-undo {
+  position: fixed;
+  z-index: 35;
+  inset-inline-end: 24px;
+  bottom: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  max-width: min(420px, calc(100vw - 48px));
+  padding: 8px 10px 8px 16px;
+  color: #173328;
+  background: #f3faf6;
+  border: 1px solid #c3dfd1;
+  border-radius: 14px;
+  box-shadow: 0 6px 24px #071d221f;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+[data-theme='dark'] .delete-undo {
+  color: #e4f4e9;
+  background: #253a31;
+  border-color: #476658;
+}
+
+.delete-undo p { margin: 0; }
+.delete-undo p + p { margin-top: 4px; }
+
+.delete-undo button {
+  min-width: 68px;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 9px;
+  background: #1d6248;
+  color: white;
+  font: inherit;
+}
+
+.delete-undo button:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: -4px;
+}
+
+@media (max-width: 760px) {
+  .delete-undo {
+    inset-inline: 16px;
+    bottom: calc(68px + env(safe-area-inset-bottom));
+    max-width: none;
+  }
+}

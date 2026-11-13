@@ -1,0 +1,384 @@
+.settings-page {
+  --settings-surface: #fff;
+  --settings-text: #192037;
+  --settings-muted: #556078;
+  --settings-line: #e0e4ec;
+  --settings-accent: #244ca4;
+  --settings-tint: #e9effe;
+  --settings-knob: #fff;
+  box-sizing: border-box;
+  width: min(100% - 48px, 640px);
+  margin-inline: auto;
+  padding-block: clamp(52px, 9vw, 100px) 100px;
+  color: var(--settings-text);
+}
+
+[data-theme="dark"] .settings-page {
+  --settings-surface: #262d3b;
+  --settings-text: #f1f4fc;
+  --settings-muted: #b5bfd4;
+  --settings-line: #414c63;
+  --settings-accent: #bfd0ff;
+  --settings-tint: #303d5b;
+  --settings-knob: #182238;
+}
+
+[data-theme="light"] .main-area:has(> .settings-page) {
+  background: #f7f8fc;
+}
+
+[data-theme="dark"] .main-area:has(> .settings-page) {
+  background: #1c222e;
+}
+
+.settings-page h1 {
+  margin: 0 0 22px;
+  font-size: clamp(36px, 6vw, 52px);
+  font-weight: 800;
+  letter-spacing: -.045em;
+  line-height: 1.08;
+}
+
+.settings-page__groups {
+  overflow: hidden;
+  border: 1px solid var(--settings-line);
+  border-radius: 16px;
+  background: var(--settings-surface);
+}
+
+.settings-page__group + .settings-page__group {
+  border-top: 1px solid var(--settings-line);
+}
+
+.settings-page__row {
+  display: flex;
+  min-height: 52px;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  list-style: none;
+  cursor: pointer;
+}
+
+.settings-page__row::-webkit-details-marker {
+  display: none;
+}
+
+.settings-page__row::marker {
+  content: '';
+}
+
+.settings-page__icon {
+  display: grid;
+  flex: 0 0 20px;
+  place-items: center;
+  color: var(--settings-muted);
+}
+
+.settings-page__label {
+  flex: 1;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.settings-page__value {
+  color: var(--settings-muted);
+  font-size: 13px;
+}
+
+.settings-page__chevron {
+  flex: none;
+  color: var(--settings-muted);
+}
+
+.settings-page__group[open] .settings-page__chevron {
+  transform: rotate(90deg);
+}
+
+.settings-page__row:hover,
+.settings-page__action:hover {
+  background: var(--settings-tint);
+}
+
+.settings-page__panel {
+  display: grid;
+  gap: 12px;
+  padding: 0 16px 16px;
+}
+
+.settings-page__description {
+  margin: 0;
+  color: var(--settings-muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.settings-page__themes {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.settings-page__themes legend {
+  margin-bottom: 10px;
+  padding: 0;
+  color: var(--settings-muted);
+  font-size: 13px;
+}
+
+.settings-page__theme-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.settings-page__theme,
+.settings-page__upload {
+  position: relative;
+  cursor: pointer;
+}
+
+.settings-page__theme input,
+.settings-page__upload input {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  cursor: pointer;
+  opacity: 0;
+}
+
+.settings-page__theme > span {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 5px;
+  border: 1px solid var(--settings-line);
+  border-radius: 10px;
+  font-size: 13px;
+}
+
+.settings-page__theme input:checked + span {
+  border-color: var(--settings-accent);
+  background: var(--settings-tint);
+  color: var(--settings-accent);
+  font-weight: 700;
+}
+
+.settings-page__row:focus-visible,
+.settings-page__theme input:focus-visible + span,
+.settings-page__action:focus-visible,
+.settings-page__upload:has(input:focus-visible),
+.settings-page__toggle input:focus-visible {
+  outline: 2px solid var(--settings-accent);
+  outline-offset: 2px;
+}
+
+.settings-page__row:focus-visible {
+  outline-offset: -3px;
+}
+
+.settings-page__actions {
+  display: grid;
+  gap: 8px;
+}
+
+.settings-page__action {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border: 1px solid var(--settings-line);
+  border-radius: 10px;
+  background: var(--settings-surface);
+  color: var(--settings-accent);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 650;
+  text-align: left;
+}
+
+.settings-page__action svg {
+  flex: none;
+}
+
+.settings-page__external {
+  margin-inline-start: auto;
+}
+
+.settings-page__toggle {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.settings-page__toggle-copy {
+  display: grid;
+  gap: 4px;
+  font-size: 14px;
+}
+
+.settings-page__toggle-copy span {
+  color: var(--settings-muted);
+  line-height: 1.4;
+}
+
+.settings-page__toggle input {
+  box-sizing: border-box;
+  display: flex;
+  flex: none;
+  width: 44px;
+  height: 26px;
+  align-items: center;
+  margin: 0;
+  padding: 3px;
+  appearance: none;
+  border: 1px solid var(--settings-muted);
+  border-radius: 999px;
+  background: var(--settings-surface);
+  cursor: pointer;
+}
+
+.settings-page__toggle input::before {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--settings-muted);
+  content: '';
+}
+
+.settings-page__toggle input:checked {
+  justify-content: flex-end;
+  border-color: var(--settings-accent);
+  background: var(--settings-accent);
+}
+
+.settings-page__toggle input:checked::before {
+  background: var(--settings-knob);
+}
+
+@media (max-width: 760px) {
+  .main-area:has(> .settings-page) > .mobile-header {
+    display: none;
+  }
+
+  .settings-page {
+    width: calc(100% - 32px);
+    padding-top: max(44px, calc(env(safe-area-inset-top) + 16px));
+    padding-bottom: calc(100px + env(safe-area-inset-bottom));
+  }
+
+  .settings-page h1 {
+    margin-bottom: 20px;
+    font-size: 36px;
+  }
+}
+
+.settings-page__field,
+.settings-page__name-form {
+  display: grid;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.settings-page__field input,
+.settings-page__field select {
+  box-sizing: border-box;
+  min-width: 0;
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 11px;
+  border: 1px solid var(--settings-line);
+  border-radius: 10px;
+  background: var(--settings-surface);
+  color: var(--settings-text);
+  font: inherit;
+  font-size: 16px;
+}
+
+.settings-page__field input::placeholder {
+  color: var(--settings-muted);
+}
+
+.settings-page__field input:focus-visible,
+.settings-page__field select:focus-visible {
+  outline: 2px solid var(--settings-accent);
+  outline-offset: 2px;
+}
+
+.settings-page__name-form .settings-page__action {
+  justify-self: start;
+  margin-top: 4px;
+}
+
+.focus-break-reminder {
+  position: fixed;
+  z-index: 40;
+  right: 16px;
+  bottom: 24px;
+  width: min(calc(100% - 32px), 360px);
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 8px 30px #14182c26;
+}
+
+.focus-break-reminder__copy,
+.focus-break-reminder__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.focus-break-reminder__copy {
+  padding: 0 4px 6px;
+  font-size: 14px;
+}
+
+.focus-break-reminder__copy svg {
+  flex: none;
+}
+
+.focus-break-reminder__actions {
+  justify-content: flex-end;
+}
+
+.focus-break-reminder__actions button {
+  min-height: 44px;
+  padding: 0 11px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface2);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.focus-break-reminder__actions button:last-child {
+  border-color: var(--dark);
+  background: var(--dark);
+  color: var(--darkText);
+}
+
+.focus-break-reminder__actions button:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 2px;
+}
+
+@media (max-width: 760px) {
+  .focus-break-reminder {
+    bottom: calc(72px + env(safe-area-inset-bottom));
+  }
+}

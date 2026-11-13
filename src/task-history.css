@@ -1,0 +1,174 @@
+.task-history {
+  width: min(560px, calc(100% - 32px));
+  max-height: calc(100dvh - 32px);
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface);
+  color: var(--text);
+  overscroll-behavior: contain;
+}
+
+.task-history::backdrop {
+  background: rgb(16 25 47 / 50%);
+}
+
+.task-history__body {
+  display: grid;
+  gap: 16px;
+  padding: clamp(16px, 5vw, 24px);
+}
+
+.task-history__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.task-history__header h2 {
+  margin: 3px 0 0;
+  font-size: 25px;
+  overflow-wrap: anywhere;
+}
+
+.task-history__header p,
+.task-history__section > p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.task-history__close,
+.task-history__write {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  border-radius: 10px;
+  font: inherit;
+}
+
+.task-history__close {
+  width: 44px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.task-history__write {
+  gap: 8px;
+  padding: 8px 14px;
+  border: 0;
+  background: #145adf;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.task-history :where(button):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.task-history__section {
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.task-history__section h3 {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0 0 9px;
+  font-size: 15px;
+}
+
+.task-history__section ul {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.task-history__section li + li {
+  border-top: 1px solid var(--line);
+}
+
+.task-history__session,
+.task-history__note {
+  padding: 8px 0;
+}
+
+.task-history__session {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 10px;
+  font-size: 13px;
+}
+
+.task-history__section time {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.task-history__note p {
+  margin: 5px 0 0;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.task-history__note img {
+  display: block;
+  max-width: 100%;
+  max-height: 160px;
+  margin-top: 8px;
+  border-radius: 8px;
+}
+
+.life-main-task-link {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  gap: 5px;
+  min-width: 0;
+  min-height: 32px;
+  padding: 1px 0;
+  border: 0;
+  background: transparent;
+  color: var(--main-blue-text);
+  font-size: 16px;
+  font-weight: 700;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+.life-main-task-link > svg {
+  flex: none;
+}
+
+.life-main-task-link:hover {
+  text-decoration: underline;
+}
+
+.journal-task-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0 0 8px;
+  padding: 5px 8px;
+  border: 1px solid var(--journal-border);
+  border-radius: 9px;
+  color: var(--journal-accent);
+  font-size: 13px;
+}
+
+.journal-task-link span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
