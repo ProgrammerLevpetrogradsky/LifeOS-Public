@@ -434,13 +434,12 @@
   --journal-tint: var(--main-soft);
 }
 
-.life-main-editor label {
+.life-main-editor-label {
   font-size: 14px;
   font-weight: 750;
 }
 
-.life-main-editor input,
-.life-main-editor select {
+.life-main-editor input {
   min-height: 44px;
   min-width: 0;
   width: 100%;
@@ -452,7 +451,15 @@
   font-size: 16px;
 }
 
-.life-main-editor > div,
+.life-main-editor-lists {
+  margin-bottom: 0;
+}
+
+.life-main-editor-lists button:not(:disabled):hover {
+  background: var(--main-soft);
+}
+
+.life-main-editor-actions,
 .life-main-delete {
   display: flex;
   align-items: center;

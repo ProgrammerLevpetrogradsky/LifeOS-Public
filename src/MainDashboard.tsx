@@ -260,16 +260,17 @@ export default function MainDashboard({ tasks, pausedTaskTitle, displayName, onR
     {editor && <form className="life-main-editor" onSubmit={saveTask}>
       <label htmlFor="life-main-task-title" className="journal-sr-only">Task name</label>
       <input ref={editorInput} id="life-main-task-title" placeholder="Task name" maxLength={140} value={editor.title} onChange={event => setEditor({ ...editor, title: event.target.value })} />
-      <label htmlFor="life-main-task-list">List</label>
-      <select id="life-main-task-list" value={editor.list} onChange={event => {
-        const list = taskLists.find(list => list === event.currentTarget.value)
-        if (list) setEditor({ ...editor, list })
-      }}>
-        {taskLists.map(list => <option key={list} value={list} disabled={list === 'today' && cannotAddToToday}>
-          {listLabels[list]}{list === 'today' && cannotAddToToday ? ' (full)' : ''}
-        </option>)}
-      </select>
-      <div>
+      <span id="life-main-task-list-label" className="life-main-editor-label">List</span>
+      <div className="life-main-filters life-main-editor-lists" role="group" aria-labelledby="life-main-task-list-label">
+        {taskLists.map(list => {
+          const full = list === 'today' && cannotAddToToday
+          return <button type="button" key={list} aria-pressed={editor.list === list} disabled={full}
+            onClick={() => setEditor({ ...editor, list })}>
+            {listLabels[list]}{full ? ' (full)' : ''}
+          </button>
+        })}
+      </div>
+      <div className="life-main-editor-actions">
         <button type="button" className="life-main-text" onClick={() => editorDialog.current?.close()}>Cancel</button>
         <button type="submit" className="life-main-primary" disabled={!editor.title.trim() || (editor.list === 'today' && cannotAddToToday)}>{editor.id ? 'Save task' : 'Add task'}</button>
       </div>
