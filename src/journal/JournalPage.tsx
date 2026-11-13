@@ -331,7 +331,7 @@ export default function JournalPage({
       <section className="journal-timeline" aria-labelledby="journal-timeline-title">
         <header className="journal-timeline-heading">
           <h2 id="journal-timeline-title">Entries</h2>
-          <span aria-live="polite">{resultCount} {resultCount === 1 ? 'entry' : 'entries'}</span>
+          <span className="journal-entry-count" aria-live="polite">{resultCount} {resultCount === 1 ? 'entry' : 'entries'}</span>
         </header>
         <span className="journal-sr-only" role="status">{notice}</span>
         {groups.length === 0 ? (
