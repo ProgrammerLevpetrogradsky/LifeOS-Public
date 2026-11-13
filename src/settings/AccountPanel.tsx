@@ -1,26 +1,14 @@
-import {
-  createUserWithEmailAndPassword, reload, sendEmailVerification, sendPasswordResetEmail,
-  signInWithEmailAndPassword, signOut, type Auth, type User,
-} from '@firebase/auth'
 import { useState, type FormEvent } from 'react'
+import type { AccountAuth } from '../accounts'
 
-type Mode = 'sign-in' | 'sign-up' | 'reset'
+type Mode = 'sign-in' | 'sign-up' | 'verify' | 'reset'
+type AccountUser = { email: string; emailVerified: boolean }
 
-function errorMessage(error: unknown) {
-  const code = error && typeof error === 'object' && 'code' in error ? error.code : ''
-  if (code === 'auth/invalid-credential') return 'Email or password is incorrect.'
-  if (code === 'auth/weak-password') return 'Choose a stronger password.'
-  if (code === 'auth/too-many-requests') return 'Too many attempts. Try again later.'
-  if (code === 'auth/network-request-failed') return 'Could not connect. Check your internet connection.'
-  return 'Could not complete this request. Try again.'
-}
-
-export default function AccountPanel({ auth, user, onVerified }: {
-  auth: Auth; user: User | null; onVerified: (user: User) => void
-}) {
+export default function AccountPanel({ auth, user }: { auth: AccountAuth; user?: AccountUser }) {
   const [mode, setMode] = useState<Mode>('sign-in')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [code, setCode] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
@@ -31,68 +19,90 @@ export default function AccountPanel({ auth, user, onVerified }: {
     setError('')
     setNotice('')
     try { await action() }
-    catch (error) { setError(errorMessage(error)) }
+    catch (error) { setError(error instanceof Error ? error.message : 'Could not connect. Try again.') }
     finally { setBusy(false) }
-  }
-
-  const submit = (event: FormEvent) => {
-    event.preventDefault()
-    void run(async () => {
-      const address = email.trim()
-      if (mode === 'reset') {
-        await sendPasswordResetEmail(auth, address)
-        setNotice('If an account exists for that email, a reset link will arrive shortly.')
-      } else if (mode === 'sign-up') {
-        const { user } = await createUserWithEmailAndPassword(auth, address, password)
-        setPassword('')
-        await sendEmailVerification(user)
-      } else {
-        await signInWithEmailAndPassword(auth, address, password)
-        setPassword('')
-      }
-    })
   }
 
   function changeMode(next: Mode) {
     setMode(next)
     setPassword('')
+    setCode('')
     setError('')
     setNotice('')
   }
 
+  const address = user?.email ?? email.trim()
+  const verify = mode === 'verify' || (user && !user.emailVerified)
+
+  const submit = (event: FormEvent) => {
+    event.preventDefault()
+    void run(async () => {
+      if (verify) {
+        const result = await auth.$fetch('/email-otp/verify-email', {
+          method: 'POST', body: { email: address, otp: code.trim() },
+        })
+        if (result.error) throw new Error('The code is invalid or has expired.')
+        changeMode('sign-in')
+        setNotice('Email verified. Sign in to open your workspace.')
+      } else if (mode === 'reset') {
+        const result = await auth.requestPasswordReset({ email: address, redirectTo: `${window.location.origin}/?account=reset` })
+        if (result.error && result.error.status !== 404) throw new Error('Could not request a reset. Try again.')
+        setNotice('If an account exists, check your email for a reset link.')
+      } else if (mode === 'sign-up') {
+        const result = await auth.signUp.email({ email: address, password, name: 'LifeOS member' })
+        if (result.error) throw new Error('Could not create the account. Try signing in if you already registered.')
+        changeMode('verify')
+        if (result.data?.user.emailVerified) changeMode('sign-in')
+        else setNotice('Enter the verification code from your email.')
+      } else {
+        const result = await auth.signIn.email({ email: address, password })
+        if (result.error?.code === 'EMAIL_NOT_VERIFIED') {
+          changeMode('verify')
+          setNotice('Enter your verification code or request a new one.')
+        } else if (result.error) {
+          throw new Error('Could not sign in. Check your email and password.')
+        }
+      }
+    })
+  }
+
   return <div className="settings-page__account">
-    {user ? <>
+    {user?.emailVerified ? <>
       <p className="settings-page__description settings-page__email">{user.email}</p>
-      {!user.emailVerified && <>
-        <p className="settings-page__description">Confirm your email to open your account workspace.</p>
-        <button className="settings-page__action" disabled={busy} onClick={() => void run(async () => {
-          await reload(user)
-          if (user.emailVerified) onVerified(user)
-          else setNotice('Open the verification link in your email, then try again.')
-        })}>I verified my email</button>
-        <button className="settings-page__action" disabled={busy} onClick={() => void run(async () => {
-          await sendEmailVerification(user)
-          setNotice('Verification email sent.')
-        })}>Send verification email</button>
-      </>}
       <button className="settings-page__action" disabled={busy} onClick={() => void run(async () => {
-        await signOut(auth)
+        const result = await auth.signOut()
+        if (result.error) throw new Error('Could not sign out. Try again.')
         changeMode('sign-in')
       })}>Sign out</button>
     </> : <form className="settings-page__account" onSubmit={submit}>
-      <label className="settings-page__field">Email
+      {verify ? <label className="settings-page__field">Verification code
+        <input inputMode="numeric" autoComplete="one-time-code" required pattern="[0-9]{6}"
+          value={code} onChange={event => setCode(event.currentTarget.value)} />
+      </label> : <label className="settings-page__field">Email
         <input type="email" autoComplete="username" required value={email} onChange={event => setEmail(event.currentTarget.value)} />
-      </label>
-      {mode !== 'reset' && <label className="settings-page__field">Password
+      </label>}
+      {!verify && mode !== 'reset' && <label className="settings-page__field">Password
         <input type="password" autoComplete={mode === 'sign-up' ? 'new-password' : 'current-password'}
           required minLength={mode === 'sign-up' ? 8 : undefined} value={password} onChange={event => setPassword(event.currentTarget.value)} />
       </label>}
       <button className="settings-page__action" type="submit" disabled={busy}>
-        {mode === 'sign-up' ? 'Create account' : mode === 'reset' ? 'Send reset link' : 'Sign in'}
+        {verify ? 'Verify email' : mode === 'sign-up' ? 'Create account' : mode === 'reset' ? 'Send reset link' : 'Sign in'}
       </button>
       <div className="settings-page__account-links">
-        {mode !== 'sign-in' && <button type="button" disabled={busy} onClick={() => changeMode('sign-in')}>Sign in</button>}
-        {mode === 'sign-in' && <>
+        {verify && <button type="button" disabled={busy} onClick={() => void run(async () => {
+          const result = await auth.$fetch('/email-otp/send-verification-otp', {
+            method: 'POST', body: { email: address, type: 'email-verification' },
+          })
+          if (result.error) throw new Error('Could not send a code. Try again later.')
+          setNotice('Verification code sent.')
+        })}>Send a new code</button>}
+        {user && verify && <button type="button" disabled={busy} onClick={() => void run(async () => {
+          const result = await auth.signOut()
+          if (result.error) throw new Error('Could not sign out. Try again.')
+          changeMode('sign-in')
+        })}>Sign out</button>}
+        {!user && mode !== 'sign-in' && <button type="button" disabled={busy} onClick={() => changeMode('sign-in')}>Sign in</button>}
+        {!verify && mode === 'sign-in' && <>
           <button type="button" disabled={busy} onClick={() => changeMode('sign-up')}>Create account</button>
           <button type="button" disabled={busy} onClick={() => changeMode('reset')}>Forgot password?</button>
         </>}

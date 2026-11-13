@@ -17,11 +17,11 @@ Open the local address printed by Vite (usually `http://localhost:5173`). For a 
 
 ### Email accounts
 
-Create a Firebase web app in a dedicated LifeOS project. Enable Email/Password in Firebase Authentication and add the deployed LifeOS hostname to Authorized domains. Copy the four public web configuration values from the Firebase console into the matching variables listed in `.env.example`. Use `.env.local` for local development and deployment environment variables for the hosted build. Rebuild after setting them.
+Connect a dedicated Neon project with Managed Better Auth to your Vercel project. In Neon, enable email/password sign-up and sign-in, require email verification by code at sign-up, and add the deployed LifeOS origin to trusted domains. Use a custom SMTP provider for a production rollout. See the [Neon Auth production checklist](https://neon.com/docs/auth/production-checklist).
 
-With configuration present, **Settings → Account** offers registration, email verification, sign-in, password reset, and sign-out. Each verified account gets a separate workspace in the current browser. Guest data remains available after signing out. To copy it to an account workspace or another browser, export and restore a backup. Accounts authenticate across devices, while workspace data is stored locally.
+Set `VITE_NEON_AUTH_URL` to the branch's public Auth Base URL (the Vercel integration can inject it). Set `VITE_LIFEOS_ACCOUNTS_ENABLED=true` after configuring and checking verification, then rebuild. Keep database credentials out of variables prefixed with `VITE_`.
 
-For local testing with the Firebase Authentication emulator, set `VITE_FIREBASE_AUTH_EMULATOR` to its HTTP origin. Production builds ignore this variable.
+**Settings → Account** offers registration, email verification, sign-in, password reset, and sign-out. Each verified account gets a separate workspace in the current browser. Guest data remains available after signing out. To copy it to an account workspace or another browser, export and restore a backup. Accounts authenticate across devices, while workspace data is stored locally.
 
 ## MVP features
 

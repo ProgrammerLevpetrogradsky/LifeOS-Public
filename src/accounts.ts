@@ -1,16 +1,9 @@
-import { initializeApp } from '@firebase/app'
-import { connectAuthEmulator, getAuth } from '@firebase/auth'
-const { VITE_FIREBASE_API_KEY, VITE_FIREBASE_PROJECT_ID, VITE_FIREBASE_APP_ID, VITE_FIREBASE_AUTH_DOMAIN } = import.meta.env
+import { createAuthClient } from '@neon/auth'
+import { BetterAuthReactAdapter } from '@neon/auth/react/adapters'
 
-export const accountAuth = VITE_FIREBASE_API_KEY && VITE_FIREBASE_PROJECT_ID && VITE_FIREBASE_APP_ID && VITE_FIREBASE_AUTH_DOMAIN
-  ? getAuth(initializeApp({
-    apiKey: VITE_FIREBASE_API_KEY,
-    projectId: VITE_FIREBASE_PROJECT_ID,
-    appId: VITE_FIREBASE_APP_ID,
-    authDomain: VITE_FIREBASE_AUTH_DOMAIN,
-  }))
+const url = import.meta.env.VITE_NEON_AUTH_URL
+export const accountAuth = url && import.meta.env.VITE_LIFEOS_ACCOUNTS_ENABLED === 'true'
+  ? createAuthClient(url, { adapter: BetterAuthReactAdapter() })
   : null
 
-if (accountAuth && import.meta.env.DEV && import.meta.env.VITE_FIREBASE_AUTH_EMULATOR) {
-  connectAuthEmulator(accountAuth, import.meta.env.VITE_FIREBASE_AUTH_EMULATOR)
-}
+export type AccountAuth = NonNullable<typeof accountAuth>
