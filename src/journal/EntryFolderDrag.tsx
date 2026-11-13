@@ -1,18 +1,21 @@
 import { FolderOpen, GripVertical } from 'lucide-react'
-import { useEffect, useRef, useState, type PointerEvent } from 'react'
-import type { JournalFolder } from '../data'
+import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent } from 'react'
+import type { JournalEntry, JournalFolder } from '../data'
 import { FolderGlyph } from './FolderGlyph'
 
 interface EntryFolderDragProps {
   folders: JournalFolder[]
-  folderId?: string
+  entry: JournalEntry
   onMove: (folderId?: string) => boolean
   onChooseFolder: () => void
 }
 
-export default function EntryFolderDrag({ folders, folderId, onMove, onChooseFolder }: EntryFolderDragProps) {
+export default function EntryFolderDrag({ folders, entry, onMove, onChooseFolder }: EntryFolderDragProps) {
   const targets = useRef<HTMLUListElement>(null)
-  const pointer = useRef<{ id: number; startX: number; startY: number; x: number; y: number; moved: boolean } | undefined>(undefined)
+  const preview = useRef<HTMLDivElement>(null)
+  const pointer = useRef<{
+    id: number; startX: number; startY: number; x: number; y: number; moved: boolean; card: DOMRect
+  } | undefined>(undefined)
   const frame = useRef(0)
   const suppressClick = useRef(false)
   const [dragging, setDragging] = useState(false)
@@ -20,6 +23,18 @@ export default function EntryFolderDrag({ folders, folderId, onMove, onChooseFol
   const [failed, setFailed] = useState(false)
 
   useEffect(() => () => cancelAnimationFrame(frame.current), [])
+
+  function positionPreview() {
+    const point = pointer.current
+    const card = preview.current
+    if (!point || !card) return
+    card.style.width = `${point.card.width}px`
+    card.style.transform = `translate3d(${point.card.left + point.x - point.startX}px, ${point.card.top + point.y - point.startY}px, 0)`
+  }
+
+  useLayoutEffect(() => {
+    if (dragging) positionPreview()
+  }, [dragging])
 
   function clearDrag() {
     pointer.current = undefined
@@ -37,6 +52,7 @@ export default function EntryFolderDrag({ folders, folderId, onMove, onChooseFol
     const list = targets.current
     const point = pointer.current
     if (!point) return
+    positionPreview()
     if (list && list.scrollHeight > list.clientHeight) {
       const { left, right, top, bottom } = list.getBoundingClientRect()
       if (point.x >= left && point.x <= right && point.y >= top && point.y <= bottom) {
@@ -52,11 +68,13 @@ export default function EntryFolderDrag({ folders, folderId, onMove, onChooseFol
 
   function pointerDown(event: PointerEvent<HTMLButtonElement>) {
     if (!event.isPrimary || event.button !== 0 || pointer.current) return
+    const card = event.currentTarget.closest('.journal-entry')?.getBoundingClientRect()
+    if (!card) return
     suppressClick.current = false
     setFailed(false)
     event.currentTarget.setPointerCapture(event.pointerId)
     pointer.current = {
-      id: event.pointerId, startX: event.clientX, startY: event.clientY, x: event.clientX, y: event.clientY, moved: false,
+      id: event.pointerId, startX: event.clientX, startY: event.clientY, x: event.clientX, y: event.clientY, moved: false, card,
     }
   }
 
@@ -83,7 +101,7 @@ export default function EntryFolderDrag({ folders, folderId, onMove, onChooseFol
         if (pointer.current?.id !== event.pointerId) return
         const target = pointer.current.moved ? destinationAt(event.clientX, event.clientY) : undefined
         clearDrag()
-        if (target !== undefined && target !== (folderId ?? '')) setFailed(!onMove(target || undefined))
+        if (target !== undefined && target !== (entry.folderId ?? '')) setFailed(!onMove(target || undefined))
       }}
       onPointerCancel={clearDrag} onLostPointerCapture={clearDrag}
       onKeyDown={event => {
@@ -98,6 +116,11 @@ export default function EntryFolderDrag({ folders, folderId, onMove, onChooseFol
       }}>
       <GripVertical size={19} aria-hidden="true" />
     </button>
+    {dragging && <div className="journal-entry-drag-preview" ref={preview} aria-hidden="true">
+      {entry.photo && <img src={entry.photo} alt="" />}
+      <span>{entry.text || 'Photo entry'}</span>
+      <GripVertical size={19} />
+    </div>}
     {dragging && <div className="journal-entry-drop-tray" aria-hidden="true">
       <strong>Drop in a folder</strong>
       <ul ref={targets}>

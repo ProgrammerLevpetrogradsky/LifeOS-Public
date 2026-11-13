@@ -210,7 +210,7 @@ function JournalCard({ entry, folders, onEdit, onDelete, onMove, isSearchResult 
           </div>
           {entry.text && <p>{entry.text}</p>}
         </div>
-        {action !== 'delete' && folders.length > 0 && <EntryFolderDrag folders={folders} folderId={entry.folderId}
+        {action !== 'delete' && folders.length > 0 && <EntryFolderDrag folders={folders} entry={entry}
           onMove={onMove} onChooseFolder={() => {
             if (actionMenu.current) actionMenu.current.open = false
             moveDialog.current?.showModal()
