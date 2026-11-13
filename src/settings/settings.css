@@ -23,14 +23,6 @@
   --settings-knob: #182238;
 }
 
-[data-theme="light"] .main-area:has(> .settings-page) {
-  background: #f7f8fc;
-}
-
-[data-theme="dark"] .main-area:has(> .settings-page) {
-  background: #1c222e;
-}
-
 .settings-page h1 {
   margin: 0 0 22px;
   font-size: clamp(36px, 6vw, 52px);
@@ -230,6 +222,11 @@
 .settings-page__toggle-copy span {
   color: var(--settings-muted);
   line-height: 1.4;
+}
+
+.settings-page__navigation-toggle {
+  min-height: 54px;
+  padding-block: 5px;
 }
 
 .settings-page__toggle input {

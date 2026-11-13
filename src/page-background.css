@@ -1,0 +1,7 @@
+.main-area:has(> :is(.life-main, .journal-page, .settings-page)) {
+  background: #f7f8fc;
+}
+
+[data-theme='dark'] .main-area:has(> :is(.life-main, .journal-page, .settings-page)) {
+  background: #1c222e;
+}

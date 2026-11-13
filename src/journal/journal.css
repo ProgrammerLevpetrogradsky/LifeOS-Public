@@ -1,11 +1,3 @@
-[data-theme='light'] .main-area:has(> .journal-page) {
-  background: #f7f8fc;
-}
-
-[data-theme='dark'] .main-area:has(> .journal-page) {
-  background: #1c222e;
-}
-
 .journal-page {
   --journal-text: #192037;
   --journal-muted: #556078;

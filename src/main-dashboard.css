@@ -278,40 +278,58 @@
 }
 
 .life-main-tasks {
-  width: min(100% - 48px, 760px);
+  --main-ink: #192037;
+  --main-muted: #556078;
+  --main-line: #e0e4ec;
+  --main-soft: #edf2ff;
+  width: min(100% - 48px, 640px);
   margin-inline: auto;
-  padding: clamp(35px, 6vw, 76px) 0 100px;
+  padding: clamp(52px, 9vw, 100px) 0 100px;
+}
+
+:root[data-theme='dark'] .life-main-tasks {
+  --main-ink: #f1f4fc;
+  --main-muted: #b5bfd4;
+  --main-line: #414c63;
+  --main-surface: #262d3b;
+  --main-soft: #333e57;
+  --main-blue-text: #bfd0ff;
 }
 
 .life-main-tasks-header {
   display: flex;
   align-items: center;
-  gap: 13px;
-  margin-bottom: 20px;
+  gap: 12px;
+  margin-bottom: 24px;
 }
 
 .life-main-tasks-header h1 {
   flex: 1;
-  font-size: clamp(32px, 5vw, 45px);
-  line-height: 1;
+  font-size: clamp(36px, 6vw, 52px);
+  font-weight: 800;
+  letter-spacing: -.045em;
+  line-height: 1.08;
   margin: 0;
 }
 
-.life-main-add {
+.life-main-tasks-header .life-main-icon {
   border-radius: 50%;
-  background: var(--main-blue);
-  color: #fff;
+  background: var(--main-soft);
+  color: var(--main-blue-text);
 }
 
-.life-main-add:not(:disabled):hover {
-  background: var(--main-blue-hover);
+.life-main-tasks-header .life-main-icon:not(:disabled):hover {
+  box-shadow: inset 0 0 0 1px var(--main-line);
 }
 
 .life-main-filters {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 6px;
-  border-bottom: 1px solid var(--main-line);
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--main-line);
+  border-radius: 15px;
+  background: var(--main-surface);
   margin-bottom: 13px;
 }
 
@@ -319,8 +337,7 @@
   min-height: 44px;
   padding: 8px 3px;
   border: 0;
-  border-bottom: 2px solid transparent;
-  border-radius: 12px 12px 0 0;
+  border-radius: 11px;
   background: transparent;
   color: var(--main-muted);
   font-weight: 700;
@@ -328,7 +345,6 @@
 
 .life-main-filters button[aria-pressed='true'] {
   color: var(--main-blue-text);
-  border-bottom-color: var(--main-blue-text);
   background: var(--main-soft);
 }
 
@@ -347,16 +363,18 @@
 }
 
 .life-main-task-list {
+  display: grid;
+  gap: 8px;
   margin: 0;
   padding: 0;
   list-style: none;
-  border: 1px solid var(--main-line);
-  border-radius: 18px;
-  background: var(--main-surface);
 }
 
-.life-main-task + .life-main-task {
-  border-top: 1px solid var(--main-line);
+.life-main-task {
+  min-width: 0;
+  border: 1px solid var(--main-line);
+  border-radius: 15px;
+  background: var(--main-surface);
 }
 
 .life-main-task[data-drop-target] {
@@ -542,15 +560,18 @@
 .life-main-tasks-empty {
   display: grid;
   place-items: center;
-  gap: 8px;
-  padding: 32px 14px;
-  border: 1px dashed var(--main-line);
-  border-radius: 18px;
+  gap: 9px;
+  padding: 22px 12px;
+  border: 1px solid var(--main-line);
+  border-radius: 15px;
+  background: var(--main-surface);
   color: var(--main-muted);
+  text-align: center;
 }
 
 .life-main-tasks-empty p {
   margin: 0;
+  font-size: 14px;
 }
 
 .life-main-focus {
@@ -701,7 +722,8 @@
   }
 
   .life-main-tasks {
-    padding-top: max(26px, env(safe-area-inset-top));
+    width: calc(100% - 32px);
+    padding: max(42px, env(safe-area-inset-top)) 0 calc(90px + env(safe-area-inset-bottom));
   }
 }
 
@@ -714,10 +736,6 @@
   .life-main-shortcuts button {
     padding: 10px 8px;
     gap: 7px;
-  }
-
-  .life-main-tasks {
-    width: calc(100% - 24px);
   }
 }
 

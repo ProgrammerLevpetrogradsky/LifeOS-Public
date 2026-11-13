@@ -229,7 +229,7 @@ export default function MainDashboard({ tasks, pausedTaskTitle, displayName, onR
     <header className="life-main-tasks-header">
       <button type="button" className="life-main-icon" aria-label="Back to Home" onClick={() => { setScreen('home'); showList('today') }}><ArrowLeft size={21} /></button>
       <h1 ref={heading} tabIndex={-1}>Tasks</h1>
-      <button type="button" className="life-main-icon life-main-add" aria-label="Add task" disabled={!canAdd || editor !== null} onClick={() => addTo(addList)}><Plus size={23} /></button>
+      <button type="button" className="life-main-icon" aria-label="Add task" disabled={!canAdd || editor !== null} onClick={() => addTo(addList)}><Plus size={23} /></button>
     </header>
 
     {breakCard}

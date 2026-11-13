@@ -123,13 +123,22 @@ export default function SettingsPage({
 
         <SettingsGroup title="Navigation" icon={<Compass size={18} />}>
           <div>
-            {navigationSections.map(({ id, label }) => (
-              <label className="settings-page__toggle" key={id}>
-                <strong className="settings-page__toggle-copy">{label}</strong>
-                <input type="checkbox" role="switch" checked={!hiddenSections.includes(id)}
+            {navigationSections.map(({ id, label }) => {
+              const visible = !hiddenSections.includes(id)
+              const location = id === 'flow' ? 'on Home' : 'in the navigation bar'
+              const status = visible && id === 'flow' && hiddenSections.includes('main')
+                ? 'Shown on Home when Home is visible'
+                : `${visible ? 'Shown' : 'Hidden'} ${location}`
+              return <label className="settings-page__toggle settings-page__navigation-toggle" key={id}>
+                <span className="settings-page__toggle-copy">
+                  <strong id={`settings-nav-label-${id}`}>{label}</strong>
+                  <span id={`settings-nav-status-${id}`}>{status}</span>
+                </span>
+                <input type="checkbox" role="switch" checked={visible}
+                  aria-labelledby={`settings-nav-label-${id}`} aria-describedby={`settings-nav-status-${id}`}
                   onChange={event => onSectionVisibilityChange(id, event.currentTarget.checked)} />
               </label>
-            ))}
+            })}
           </div>
         </SettingsGroup>
 
