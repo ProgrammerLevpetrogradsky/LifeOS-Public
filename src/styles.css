@@ -27,3 +27,45 @@ label.setting-link{position:relative;cursor:pointer}label.setting-link input[typ
   outline: 2px solid var(--dark);
   outline-offset: 2px;
 }
+
+:root[data-theme=dark] {
+  color: #ececec;
+  background: #171717;
+  color-scheme: dark;
+}
+
+:root[data-theme=dark] .app-shell,
+:root[data-theme=dark] .checkin-screen {
+  --bg: #171717;
+  --surface: #242424;
+  --surface2: #303030;
+  --line: #3b3b3b;
+  --text: #ececec;
+  --muted: #b8b8b8;
+  --dark: #e2e2e2;
+  --darkText: #202020;
+  --accent: #dedede;
+  --soft: #303030;
+  --peach: #3b3531;
+  --peachText: #e4c9b5;
+}
+
+:root[data-theme=dark] .focus-screen {
+  background: #171717;
+  color: #ececec;
+}
+
+:root[data-theme=dark] .focus-top,
+:root[data-theme=dark] .focus-subtitle,
+:root[data-theme=dark] .focus-bottom p { color: #b8b8b8; }
+:root[data-theme=dark] .focus-orbit,
+:root[data-theme=dark] .focus-orbit:before { border-color: #3b3b3b; }
+:root[data-theme=dark] .focus-orbit-inner,
+:root[data-theme=dark] .time-toggle { background: #303030; color: #e2e2e2; }
+:root[data-theme=dark] .time-toggle { border-color: #3b3b3b; }
+:root[data-theme=dark] .focus-bottom .button { background: #e2e2e2; color: #202020; }
+
+:root[data-theme=dark] :focus-visible {
+  outline: 2px solid #e2e2e2;
+  outline-offset: 3px;
+}

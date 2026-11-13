@@ -9,6 +9,8 @@ interface SettingsPageProps {
   onThemeChange: (theme: Theme) => void
   showHome: boolean
   onHomeVisibilityChange: (visible: boolean) => void
+  showAskLifeOS: boolean
+  onAskLifeOSVisibilityChange: (visible: boolean) => void
   shortcutVisible: (id: Shortcut, location: ShortcutLocation) => boolean
   onShortcutChange: (id: Shortcut, location: ShortcutLocation, visible: boolean) => void
   onExport: () => void
@@ -100,7 +102,7 @@ function AboutLifeOS({ repoUrl }: { repoUrl: string }) {
 
 export default function SettingsPage({
   account,
-  theme, onThemeChange, showHome, onHomeVisibilityChange, shortcutVisible, onShortcutChange, onExport, onImport, repoUrl, focusCheckin,
+  theme, onThemeChange, showHome, onHomeVisibilityChange, showAskLifeOS, onAskLifeOSVisibilityChange, shortcutVisible, onShortcutChange, onExport, onImport, repoUrl, focusCheckin,
   reminderMinutes, onReminderMinutesChange, displayName, onDisplayNameChange,
 }: SettingsPageProps) {
   return (
@@ -131,6 +133,11 @@ export default function SettingsPage({
             <span className="settings-page__toggle-copy"><strong>Home</strong><span>In the navigation bar</span></span>
             <input type="checkbox" role="switch" aria-label="Home in navigation bar" checked={showHome}
               onChange={event => onHomeVisibilityChange(event.currentTarget.checked)} />
+          </label>
+          <label className="settings-page__toggle settings-page__navigation-toggle">
+            <span className="settings-page__toggle-copy"><strong>Ask LifeOS</strong><span>In the navigation bar</span></span>
+            <input type="checkbox" role="switch" aria-label="Ask LifeOS in navigation bar" checked={showAskLifeOS}
+              onChange={event => onAskLifeOSVisibilityChange(event.currentTarget.checked)} />
           </label>
           {!showHome && <p className="settings-page__description">Home shortcuts appear when Home is visible.</p>}
           {shortcuts.map(({ id, label }) => <fieldset key={id} className="settings-page__shortcut">

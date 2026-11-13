@@ -14,13 +14,13 @@
 }
 
 [data-theme="dark"] .settings-page {
-  --settings-surface: #262d3b;
-  --settings-text: #f1f4fc;
-  --settings-muted: #b5bfd4;
-  --settings-line: #414c63;
-  --settings-accent: #bfd0ff;
-  --settings-tint: #303d5b;
-  --settings-knob: #182238;
+  --settings-surface: #242424;
+  --settings-text: #ececec;
+  --settings-muted: #b8b8b8;
+  --settings-line: #3b3b3b;
+  --settings-accent: #e2e2e2;
+  --settings-tint: #303030;
+  --settings-knob: #171717;
 }
 
 .settings-page h1 {

@@ -1,5 +1,5 @@
-import { useEffect, useId, useRef } from 'react'
-import { BookOpen, Clock, PenLine, X } from 'lucide-react'
+import { useEffect, useId, useRef, useState } from 'react'
+import { BookOpen, Clock, PenLine, Play, X } from 'lucide-react'
 import { sessionMinutes, type FocusSession, type JournalEntry, type Task } from './data'
 import { journalDate, journalTime } from './journal/timeline'
 import './task-history.css'
@@ -8,13 +8,19 @@ interface TaskHistoryProps {
   task: Task
   sessions: FocusSession[]
   entries: JournalEntry[]
+  availableEntries: JournalEntry[]
   linksExistingDraft: boolean
+  focusAction: 'start' | 'resume' | 'unavailable'
+  focusMessage?: string
   onClose: () => void
+  onFocus: () => void
+  onLinkNote?: (id: string) => boolean
   onWriteReflection?: () => void
 }
 
-export default function TaskHistory({ task, sessions, entries, linksExistingDraft, onClose, onWriteReflection }: TaskHistoryProps) {
+export default function TaskHistory({ task, sessions, entries, availableEntries, linksExistingDraft, focusAction, focusMessage, onClose, onFocus, onLinkNote, onWriteReflection }: TaskHistoryProps) {
   const dialog = useRef<HTMLDialogElement>(null)
+  const [choosingNote, setChoosingNote] = useState(false)
   const titleId = useId()
   const sessionHeadingId = useId()
   const journalHeadingId = useId()
@@ -45,6 +51,10 @@ export default function TaskHistory({ task, sessions, entries, linksExistingDraf
               <span>{sessionMinutes(session.durationMs)}</span>
             </li>)}
           </ul> : <p>No focus sessions for this task yet.</p>}
+          <button className="task-history__action" type="button" disabled={focusAction === 'unavailable'} onClick={onFocus}>
+            <Play size={16} aria-hidden="true" /> {focusAction === 'resume' ? 'Resume focus' : 'Start focus'}
+          </button>
+          {focusMessage && <p className="task-history__hint">{focusMessage}</p>}
         </section>
 
         <section className="task-history__section" aria-labelledby={journalHeadingId}>
@@ -56,6 +66,22 @@ export default function TaskHistory({ task, sessions, entries, linksExistingDraf
               {entry.photo && <img src={entry.photo} alt="Photo attached to this entry" loading="lazy" />}
             </li>)}
           </ul> : <p>No Journal notes linked to this task yet.</p>}
+          {onLinkNote && <>
+            <button className="task-history__action" type="button" aria-expanded={choosingNote} aria-controls={`${journalHeadingId}-choices`}
+              onClick={() => setChoosingNote(value => !value)}>
+              <BookOpen size={16} aria-hidden="true" /> Link a note
+            </button>
+            {choosingNote && <div className="task-history__choices" id={`${journalHeadingId}-choices`}>
+              {availableEntries.length ? <ul aria-label="Unlinked Journal notes">
+                {availableEntries.map(entry => <li key={entry.id}>
+                  <button type="button" onClick={() => { if (onLinkNote(entry.id)) setChoosingNote(false) }}>
+                    <time dateTime={entry.createdAt}>{journalDate(entry.createdAt)} · {journalTime(entry.createdAt)}</time>
+                    <span>{entry.text.trim() || (entry.photo ? 'Photo note' : 'Empty note')}</span>
+                  </button>
+                </li>)}
+              </ul> : <p>No unlinked Journal notes available.</p>}
+            </div>}
+          </>}
         </section>
 
         {onWriteReflection && <button className="task-history__write" type="button" onClick={onWriteReflection}>

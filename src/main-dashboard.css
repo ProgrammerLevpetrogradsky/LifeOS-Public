@@ -12,13 +12,15 @@
 }
 
 :root[data-theme='dark'] .life-main {
-  --main-ink: #eff4ff;
-  --main-muted: #b8c7df;
-  --main-line: #40506b;
-  --main-surface: #17253b;
-  --main-soft: #243652;
-  --main-blue-text: #a9cbff;
-  --main-shadow: 0 16px 44px rgb(0 0 0 / 25%);
+  --main-ink: #ececec;
+  --main-muted: #b8b8b8;
+  --main-line: #3b3b3b;
+  --main-surface: #242424;
+  --main-soft: #303030;
+  --main-blue: #626262;
+  --main-blue-hover: #757575;
+  --main-blue-text: #e2e2e2;
+  --main-shadow: 0 10px 28px rgb(0 0 0 / 13%);
 }
 
 .life-main button,
@@ -213,17 +215,22 @@
   background: var(--main-blue-hover, #0f4bbc);
 }
 
-.life-main-home-actions {
+.life-main-add-task {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: 4px 12px;
+  gap: 11px;
+  width: 100%;
+  min-height: 65px;
+  padding: 11px 12px;
+  border: 1px solid var(--main-line);
+  border-radius: 19px;
+  background: var(--main-surface);
+  color: var(--main-ink);
+  text-align: left;
 }
 
-.life-main-home-actions .life-main-text {
-  min-height: 44px;
-  padding-inline: 8px;
-}
+.life-main-add-task:hover { border-color: var(--main-blue-text); }
+.life-main-shortcut-icon.add { background: var(--main-soft); color: var(--main-blue-text); }
 
 .life-main-shortcuts {
   display: grid;
@@ -281,6 +288,11 @@
   color: #65439a;
 }
 
+:root[data-theme='dark'] .life-main-shortcut-icon {
+  background: #353535;
+  color: #dedede;
+}
+
 .life-main-tasks {
   --main-ink: #192037;
   --main-muted: #556078;
@@ -292,12 +304,12 @@
 }
 
 :root[data-theme='dark'] .life-main-tasks {
-  --main-ink: #f1f4fc;
-  --main-muted: #b5bfd4;
-  --main-line: #414c63;
-  --main-surface: #262d3b;
-  --main-soft: #333e57;
-  --main-blue-text: #bfd0ff;
+  --main-ink: #ececec;
+  --main-muted: #b8b8b8;
+  --main-line: #3b3b3b;
+  --main-surface: #242424;
+  --main-soft: #303030;
+  --main-blue-text: #e2e2e2;
 }
 
 .life-main-tasks-header {
@@ -608,13 +620,13 @@
 }
 
 :root[data-theme='dark'] .life-main-focus {
-  --focus-bg: #1c2622;
-  --focus-ink: #e6e9e1;
-  --focus-muted: #aab8ac;
-  --focus-surface: #26332d;
-  --focus-line: #435449;
-  --focus-soft: #34453a;
-  --focus-accent: #b5d5bd;
+  --focus-bg: #171717;
+  --focus-ink: #ececec;
+  --focus-muted: #b8b8b8;
+  --focus-surface: #242424;
+  --focus-line: #3b3b3b;
+  --focus-soft: #303030;
+  --focus-accent: #e2e2e2;
 }
 
 .life-main-focus :focus-visible {
@@ -743,11 +755,18 @@
   }
 
   .life-main-home {
+    display: flex;
+    flex-direction: column;
+    min-height: 100dvh;
     padding-bottom: calc(78px + env(safe-area-inset-bottom));
   }
 
   .life-main-hero {
     padding-top: max(37px, env(safe-area-inset-top));
+  }
+
+  .life-main-stack {
+    margin-block: auto;
   }
 
   .life-main-tasks {

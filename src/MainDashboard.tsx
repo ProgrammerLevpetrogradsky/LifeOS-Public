@@ -217,9 +217,10 @@ export default function MainDashboard({ initialScreen = 'home', onReturnHome, re
         )}
       </section>}
 
-      <div className="life-main-home-actions">
-        <button type="button" className="life-main-text" onClick={() => openTasks(true)}><Plus size={17} aria-hidden="true" /> Add a task</button>
-      </div>
+      <button type="button" className="life-main-add-task" onClick={() => openTasks(true)}>
+        <span className="life-main-shortcut-icon add"><Plus size={21} aria-hidden="true" /></span>
+        <strong>Add a task</strong>
+      </button>
 
       <nav className="life-main-shortcuts" aria-label="Home shortcuts">
         {showTasksShortcut && <button type="button" onClick={() => openTasks()}>

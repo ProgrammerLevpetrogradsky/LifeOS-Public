@@ -17,15 +17,15 @@
 }
 
 [data-theme='dark'] .journal-page {
-  --journal-text: #f1f4fc;
-  --journal-muted: #b5bfd4;
-  --journal-card: #262d3b;
-  --journal-field: #1e2533;
-  --journal-border: #414c63;
-  --journal-tint: #333e57;
-  --journal-accent: #bfd0ff;
-  --journal-primary: #456bc6;
-  --journal-primary-hover: #365ab2;
+  --journal-text: #ececec;
+  --journal-muted: #b8b8b8;
+  --journal-card: #242424;
+  --journal-field: #303030;
+  --journal-border: #3b3b3b;
+  --journal-tint: #303030;
+  --journal-accent: #e2e2e2;
+  --journal-primary: #626262;
+  --journal-primary-hover: #757575;
   --journal-danger: #ffb6c1;
   --journal-shadow: none;
 }

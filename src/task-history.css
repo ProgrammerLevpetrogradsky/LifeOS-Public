@@ -40,7 +40,8 @@
 }
 
 .task-history__close,
-.task-history__write {
+.task-history__write,
+.task-history__action {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -59,11 +60,64 @@
 .task-history__write {
   gap: 8px;
   padding: 8px 14px;
-  border: 0;
-  background: #145adf;
-  color: #fff;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--text);
   font-size: 14px;
+  font-weight: 600;
+}
+
+.task-history__action {
+  gap: 7px;
+  margin-top: 12px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 13px;
   font-weight: 700;
+}
+
+.task-history__action:hover:not(:disabled),
+.task-history__write:hover {
+  background: var(--soft);
+}
+
+.task-history__hint,
+.task-history__choices > p {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.task-history__choices {
+  margin-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+.task-history__choices button {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  padding: 10px 0;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+}
+
+.task-history__choices button:hover {
+  color: var(--accent);
+}
+
+.task-history__choices button span {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
 }
 
 .task-history :where(button):focus-visible {

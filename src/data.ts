@@ -21,7 +21,7 @@ export function shortcutVisible(data: LifeOSData, shortcut: Shortcut, location: 
   return data.shortcutPreferences?.[shortcut]?.[location] ?? (
     location === 'home'
       ? !((shortcut === 'journal' || shortcut === 'flow') && data.hiddenSections?.includes(shortcut))
-      : shortcut === 'journal' && !data.hiddenSections?.includes('journal')
+      : false
   )
 }
 export const breakReminderMinutes = [0, 5, 10, 15, 20] as const
@@ -172,6 +172,7 @@ export interface LifeOSData {
   pendingSession: PendingSession | null
   theme: Theme
   hiddenSections?: NavigationSection[]
+  askLifeOSInBar?: boolean
   shortcutPreferences?: ShortcutPreferences
   focusCheckinEnabled?: boolean
   displayName?: string
@@ -257,6 +258,7 @@ export function validateLifeOSData(value: unknown): value is LifeOSData {
   if (value.theme !== 'light' && value.theme !== 'dark' && value.theme !== 'system') return false
   if (value.hiddenSections !== undefined && (!Array.isArray(value.hiddenSections) ||
     !value.hiddenSections.every(id => navigationSections.some(section => section.id === id)))) return false
+  if (value.askLifeOSInBar !== undefined && typeof value.askLifeOSInBar !== 'boolean') return false
   if (value.shortcutPreferences !== undefined && (!isRecord(value.shortcutPreferences) ||
     !Object.entries(value.shortcutPreferences).every(([id, options]) =>
       shortcuts.some(shortcut => shortcut.id === id) && isRecord(options) &&

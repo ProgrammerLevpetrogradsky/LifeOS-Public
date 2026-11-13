@@ -1,6 +1,7 @@
 import MainDashboard from './MainDashboard'
 import MainFocus from './MainFocus'
 import TaskHistory from './TaskHistory'
+import AskLifeOS from './home/AskLifeOS'
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react'
 import { ArrowRight, BookOpen, ClipboardList, House, Leaf, MessageCircle, Play, Settings2, Sparkles } from 'lucide-react'
 import { focusedDuration, loadData, recordUnratedSession, restoreBackup, saveData, shortcuts, shortcutVisible, type Factor, type JournalFolderAppearance, type LifeOSData, type Shortcut, type ShortcutLocation, type Task } from './data'
@@ -12,7 +13,7 @@ import SettingsPage from './settings/SettingsPage'
 import { useDeleteUndo } from './delete-undo'
 import UnifiedSearch from './search/UnifiedSearch'
 
-type View = Exclude<Shortcut, 'focus'> | 'main' | 'settings' | 'focus-history'
+type View = Exclude<Shortcut, 'focus'> | 'main' | 'ask' | 'settings' | 'focus-history'
 const shortcutIcons = { tasks: ClipboardList, journal: BookOpen, focus: Play, flow: MessageCircle }
 const factors: Factor[] = ['Meaningful Goal', 'Personal Control', 'Fast Feedback', 'Other']
 const repoUrl = 'https://github.com/ProgrammerLevpetrogradsky/LifeOS-Public'
@@ -23,6 +24,7 @@ function App({ storageKey, account }: { storageKey?: string; account?: ReactNode
   const dataRef = useRef(data)
   const hiddenSections = data.hiddenSections ?? []
   const showHome = !hiddenSections.includes('main')
+  const showAskLifeOS = data.askLifeOSInBar !== false
   const onHome = (id: Shortcut) => shortcutVisible(data, id, 'home')
   const inBar = (id: Shortcut) => shortcutVisible(data, id, 'bar')
   const defaultView = showHome ? 'main' : (['journal', 'tasks', 'flow'] as const).find(inBar) ?? 'settings'
@@ -336,6 +338,7 @@ function App({ storageKey, account }: { storageKey?: string; account?: ReactNode
 
   const renderNavigation = (iconSize: number) => <>
     {showHome && <NavButton icon={<House size={iconSize} />} label="Home" selected={view === 'main'} onClick={() => navigate('main')} />}
+    {showAskLifeOS && <NavButton icon={<MessageCircle size={iconSize} />} label="Ask LifeOS" selected={view === 'ask'} onClick={() => navigate('ask')} />}
     {shortcuts.filter(({ id }) => inBar(id)).map(({ id, label }) => {
       const Icon = shortcutIcons[id]
       return <NavButton key={id} icon={<Icon size={iconSize} />} label={label} selected={view === id}
@@ -453,6 +456,17 @@ function App({ storageKey, account }: { storageKey?: string; account?: ReactNode
           onSearch={() => setSearchOpen(true)}
         />}
 
+        {view === 'ask' && <main className="life-main life-main-guide-page">
+          <h1>Ask LifeOS</h1>
+          <AskLifeOS actions={{
+            tasks: () => navigate('tasks'),
+            journal: showJournal ? () => navigate('journal') : undefined,
+            focus: data.activeSession?.pausedAt ? resumeSession : () => startFocus(),
+            reflect: !isHidden('flow') ? () => navigate('flow') : undefined,
+            settings: () => navigate('settings'),
+          }} />
+        </main>}
+
         {(view === 'flow' || view === 'focus-history') && <FlowEnginePage key={view}
           data={data} onUpdate={update} onReturn={returnFromSection} returnLabel={returnLabel} sessionsOnly={view === 'focus-history'} />}
 
@@ -473,6 +487,8 @@ function App({ storageKey, account }: { storageKey?: string; account?: ReactNode
             onThemeChange={theme => update(current => ({ ...current, theme }))}
             showHome={showHome}
             onHomeVisibilityChange={changeHomeVisibility}
+            showAskLifeOS={showAskLifeOS}
+            onAskLifeOSVisibilityChange={askLifeOSInBar => update(current => ({ ...current, askLifeOSInBar }))}
             shortcutVisible={(id, location) => location === 'home' ? onHome(id) : inBar(id)}
             onShortcutChange={changeShortcut}
             onExport={exportData}
@@ -494,8 +510,24 @@ function App({ storageKey, account }: { storageKey?: string; account?: ReactNode
         task={historyTask}
         sessions={data.sessions.filter(session => session.taskId === historyTask.id).sort((a, b) => Date.parse(b.endedAt) - Date.parse(a.endedAt))}
         entries={data.journal.filter(entry => entry.taskId === historyTask.id).sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt))}
+        availableEntries={data.journal.filter(entry => entry.taskId === undefined).sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt))}
         linksExistingDraft={Boolean((journalDraft.text.trim() || journalDraft.photo) && journalTaskId !== historyTask.id)}
+        focusAction={data.activeSession?.pausedAt && data.activeSession.taskId === historyTask.id ? 'resume' : data.activeSession || data.pendingSession ? 'unavailable' : 'start'}
+        focusMessage={data.activeSession?.pausedAt && data.activeSession.taskId !== historyTask.id ? 'Finish or resume your current focus before starting this task.' : data.pendingSession ? 'Finish your focus check-in first.' : undefined}
         onClose={() => setTaskHistoryId(null)}
+        onFocus={() => {
+          if (dataRef.current.activeSession?.pausedAt && dataRef.current.activeSession.taskId === historyTask.id) resumeSession()
+          else if (!dataRef.current.activeSession && !dataRef.current.pendingSession) startFocus(historyTask)
+          else return
+          setTaskHistoryId(null)
+        }}
+        onLinkNote={id => {
+          if (!dataRef.current.journal.some(entry => entry.id === id && entry.taskId === undefined)) return false
+          return update(current => ({
+            ...current,
+            journal: current.journal.map(entry => entry.id === id ? { ...entry, taskId: historyTask.id } : entry),
+          }))
+        }}
         onWriteReflection={showJournal ? () => {
           setTaskHistoryId(null)
           setJournalTaskId(historyTask.id)
