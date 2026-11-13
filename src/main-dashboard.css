@@ -424,11 +424,14 @@
 .life-main-editor {
   display: grid;
   gap: 10px;
-  padding: 15px;
-  margin-bottom: 13px;
-  border: 1px solid var(--main-line);
-  border-radius: 17px;
-  background: var(--main-surface);
+  padding: 4px 8px;
+}
+
+.life-main-tasks .journal-sheet {
+  --journal-border: var(--main-line);
+  --journal-card: var(--main-surface);
+  --journal-text: var(--main-ink);
+  --journal-tint: var(--main-soft);
 }
 
 .life-main-editor label {

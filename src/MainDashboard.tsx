@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type FormEvent } from 'react'
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, BookOpen, Check, ChevronRight, Circle, ClipboardList, GripHorizontal, ListTodo, MessageCircle, Pause, Pencil, Play, Plus, Search, Settings2, Trash2, X } from 'lucide-react'
 import { taskLists, type LifeOSData, type Task, type TaskList } from './data'
 import { todayTaskLimit } from './task-rules'
+import { JournalSheet } from './journal/JournalSheet'
 import './main-dashboard.css'
 
 interface MainDashboardProps {
@@ -42,7 +43,21 @@ export default function MainDashboard({ tasks, pausedTaskTitle, displayName, onR
   const [dropTarget, setDropTarget] = useState<string | null>(null)
   const [orderStatus, setOrderStatus] = useState('')
   const heading = useRef<HTMLHeadingElement>(null)
+  const editorDialog = useRef<HTMLDialogElement>(null)
+  const editorInput = useRef<HTMLInputElement>(null)
   const previousScreen = useRef(screen)
+  const editing = editor !== null
+
+  useLayoutEffect(() => {
+    const dialog = editorDialog.current
+    if (!dialog) return
+    if (editing && !dialog.open) {
+      dialog.showModal()
+      editorInput.current?.focus()
+    } else if (!editing && dialog.open) {
+      dialog.close()
+    }
+  }, [screen, editing])
 
   const now = new Date()
   const today = now.toDateString()
@@ -229,7 +244,7 @@ export default function MainDashboard({ tasks, pausedTaskTitle, displayName, onR
     <header className="life-main-tasks-header">
       <button type="button" className="life-main-icon" aria-label="Back to Home" onClick={() => { setScreen('home'); showList('today') }}><ArrowLeft size={21} /></button>
       <h1 ref={heading} tabIndex={-1}>Tasks</h1>
-      <button type="button" className="life-main-icon" aria-label="Add task" disabled={!canAdd || editor !== null} onClick={() => addTo(addList)}><Plus size={23} /></button>
+      <button type="button" className="life-main-icon" aria-label="Add task" aria-haspopup="dialog" disabled={!canAdd} onClick={() => addTo(addList)}><Plus size={23} /></button>
     </header>
 
     {breakCard}
@@ -240,9 +255,11 @@ export default function MainDashboard({ tasks, pausedTaskTitle, displayName, onR
 
     {filter === 'completed' && <h2 className="life-main-completed-title">Completed tasks</h2>}
 
+    <JournalSheet dialog={editorDialog} label={editor?.id ? 'Edit task' : 'New task'} closeLabel="Close task editor"
+      onClose={() => { if (!editorDialog.current?.open) setEditor(null) }}>
     {editor && <form className="life-main-editor" onSubmit={saveTask}>
-      <label htmlFor="life-main-task-title">{editor.id ? 'Edit task' : 'New task'}</label>
-      <input id="life-main-task-title" autoFocus maxLength={140} value={editor.title} onChange={event => setEditor({ ...editor, title: event.target.value })} />
+      <label htmlFor="life-main-task-title" className="journal-sr-only">Task name</label>
+      <input ref={editorInput} id="life-main-task-title" placeholder="Task name" maxLength={140} value={editor.title} onChange={event => setEditor({ ...editor, title: event.target.value })} />
       <label htmlFor="life-main-task-list">List</label>
       <select id="life-main-task-list" value={editor.list} onChange={event => {
         const list = taskLists.find(list => list === event.currentTarget.value)
@@ -253,10 +270,11 @@ export default function MainDashboard({ tasks, pausedTaskTitle, displayName, onR
         </option>)}
       </select>
       <div>
-        <button type="button" className="life-main-text" onClick={() => setEditor(null)}>Cancel</button>
+        <button type="button" className="life-main-text" onClick={() => editorDialog.current?.close()}>Cancel</button>
         <button type="submit" className="life-main-primary" disabled={!editor.title.trim() || (editor.list === 'today' && cannotAddToToday)}>{editor.id ? 'Save task' : 'Add task'}</button>
       </div>
     </form>}
+    </JournalSheet>
 
     <p className="life-main-task-status" role="status">{orderStatus}</p>
     {visible.length ? <ul className="life-main-task-list">
@@ -306,7 +324,8 @@ export default function MainDashboard({ tasks, pausedTaskTitle, displayName, onR
               onDragEnd={clearDrag}><GripHorizontal size={21} /></button>
           </div>
           {actions === task.id && <div className="life-main-task-actions">
-            <button type="button" className="life-main-text" onClick={() => {
+            <button type="button" className="life-main-text" aria-haspopup="dialog" onClick={event => {
+              event.currentTarget.closest('.life-main-task')?.querySelector<HTMLButtonElement>('.life-main-task-actions-toggle')?.focus()
               setEditor({ id: task.id, title: task.title, list: taskList(task) })
               setActions(null)
             }}><Pencil size={15} /> Edit or move</button>
@@ -330,7 +349,7 @@ export default function MainDashboard({ tasks, pausedTaskTitle, displayName, onR
 
     {filter === 'today' && todayIsFull && <p className="life-main-limit">Today has five active tasks. Complete or move one to make space.</p>}
     {filter !== 'completed' && <div className="life-main-tasks-footer">
-      {canAdd && !editor && <button type="button" className="life-main-text" onClick={() => addTo(filter)}><Plus size={18} /> Add a task <ArrowRight size={16} /></button>}
+      {canAdd && <button type="button" className="life-main-text" aria-haspopup="dialog" onClick={() => addTo(filter)}><Plus size={18} /> Add a task <ArrowRight size={16} /></button>}
       <button type="button" className="life-main-text life-main-completed-link" onClick={() => showList('completed')}>Completed <span>{completed.length}</span></button>
     </div>}
   </main>
